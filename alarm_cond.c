@@ -43,7 +43,7 @@ void alarm_insert (alarm_t *alarm)
 
     /*
      * LOCKING PROTOCOL:
-     * 
+     *
      * This routine requires that the caller have locked the
      * alarm_mutex!
      */
@@ -176,7 +176,7 @@ int main (int argc, char *argv[])
          * (%64[^\n]), consisting of up to 64 characters
          * separated from the seconds by whitespace.
          */
-        if (sscanf (line, "%d %64[^\n]", 
+        if (sscanf (line, "%d %64[^\n]",
             &alarm->seconds, alarm->message) < 2) {
             fprintf (stderr, "Bad command\n");
             free (alarm);
