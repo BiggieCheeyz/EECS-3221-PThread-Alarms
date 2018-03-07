@@ -14,7 +14,7 @@
 #include <time.h>
 #include "errors.h"
 
-#define DEBUG
+// #define DEBUG
 /*
 * The "alarm" structure now contains the time_t (time since the
 * Epoch, in seconds) for each alarm, so that they can be
@@ -288,7 +288,7 @@ void remove_alarms(int type, alarm_t **head){
 /***************************END NEW CODE***************************/////////////
 
 /*
-* Insert alarm entry on list, in order.
+* Insert alarm entry on list, in order of message number.
 */
 void alarm_insert (alarm_t *alarm){
   int status;
@@ -400,10 +400,10 @@ void *alarm_thread (void *arg){
     expired = 0;
     if (alarm->time > now){
 
-      #ifdef DEBUG
-        printf ("[waiting: %d(%d)\"%s\"]\n", (int)alarm->time,
-        (int)(alarm->time - time (NULL)), alarm->message);
-      #endif
+                        #ifdef DEBUG
+                          printf ("[waiting: %d(%d)\"%s\"]\n", (int)alarm->time,
+                          (int)(alarm->time - time (NULL)), alarm->message);
+                        #endif
 
       cond_time.tv_sec = alarm->time;
       cond_time.tv_nsec = 0;
@@ -579,21 +579,3 @@ int main (int argc, char *argv[]){
 // lot[type][0] += 1; // increment # of threads of that type by 1
 // int ind = lot[type][0]; // the index to store our new thread's Id
 // lot[type][ind] = thread;
-
-
-// status = pthread_mutex_lock (&alarm_mutex);
-// if (status != 0)
-//   err_abort (status, "Lock mutex");
-// alarm->time = time (NULL) + alarm->seconds;
-// alarm->request_type = TYPE_A;
-// /*
-// * Insert the new alarm into the list of alarms,
-// * sorted by expiration time.
-// */
-// alarm_insert (alarm);
-// printf("Type A Alarm Request With Message Number <%d> Received at"
-// " time <%d>: <Type A>\n", alarm->number, (int)time(NULL));
-//
-// status = pthread_mutex_unlock (&alarm_mutex);
-// if (status != 0)
-//   err_abort (status, "Unlock mutex");
