@@ -14,7 +14,7 @@
 #include <time.h>
 #include "errors.h"
 
-//#define DEBUG
+#define DEBUG
 /*
 * The "alarm" structure now contains the time_t (time since the
 * Epoch, in seconds) for each alarm, so that they can be
@@ -32,6 +32,7 @@ typedef struct alarm_tag {
   int               type; //identifies the type of alarm request ( type >= 1 )'
   int               status; // 0 == "unassigned" and 1 == "assigned"
   int               number; /* Message Number */
+  int               request_type; // TypeA == 1 TypeB == 2 TypeC == 3
   /*******************end new additions***************/
 } alarm_t;
 
@@ -40,6 +41,10 @@ pthread_mutex_t alarm_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t alarm_cond = PTHREAD_COND_INITIALIZER;
 alarm_t *alarm_list = NULL;
 time_t current_alarm = 0;
+
+const int TYPE_A = 1;
+const int TYPE_B = 2;
+const int TYPE_C = 3;
 
 
 
@@ -68,11 +73,11 @@ void test(int type){
 }
 
 /*
-* Check the alarm list to see if an alarm of this tpye exists.
+* Check the alarm list to see if a Type A alarm of this type number exists.
 *
 * return 1 if so and 0 otherwise.
 */
-int check_alarms(int type){
+int check_type_a_exists(int type){
   int     status;
   alarm_t *next, **last;
 
@@ -83,7 +88,7 @@ int check_alarms(int type){
   last = &alarm_list;
   next = *last;
   while (next != NULL) {
-    if(next->type == type){
+    if(next->type == type && next->request_type == TYPE_A){
 
       status = pthread_mutex_unlock (&alarm_mutex);
       if (status != 0)
@@ -102,11 +107,11 @@ int check_alarms(int type){
 }
 
 /*
-* Check the alarm list to see if an alarm with this type has been assigned.
+* Check the alarm list to see if a Type A alarm of this message number exists.
 *
 * return 1 if so and 0 otherwise.
 */
-int check_duplicate(int type){
+int check_number_a_exists(int num){
   int     status;
   alarm_t *next, **last;
 
@@ -117,7 +122,7 @@ int check_duplicate(int type){
   last = &alarm_list;
   next = *last;
   while (next != NULL) {
-    if(next->type == type && next->status == 1){
+    if(next->number == num && next->request_type == TYPE_A){
 
       status = pthread_mutex_unlock (&alarm_mutex);
       if (status != 0)
@@ -133,6 +138,76 @@ int check_duplicate(int type){
   if (status != 0)
     err_abort (status, "Unlock mutex");
   return 0;
+}
+
+/*
+* Check the alarm list to see if an alarm with this type already exists.
+* Takes the message type and request type as parameters
+*
+* return 1 if so and 0 otherwise.
+*/
+int check_dup(int type, int req){
+  int     status;
+  alarm_t *next, **last;
+
+  status = pthread_mutex_lock (&alarm_mutex);
+  if (status != 0)
+    err_abort (status, "Lock mutex");
+
+  last = &alarm_list;
+  next = *last;
+  while (next != NULL) {
+    if(next->type == type && next->request_type == req){
+
+      status = pthread_mutex_unlock (&alarm_mutex);
+      if (status != 0)
+        err_abort (status, "Unlock mutex");
+
+      return 1; // it exists already
+    }
+
+    last = &next->link;
+    next = next->link;
+  }
+  status = pthread_mutex_unlock (&alarm_mutex);
+  if (status != 0)
+    err_abort (status, "Unlock mutex");
+  return 0; // It doesn't exist.
+}
+
+/*
+* Check the alarm list to see if an alarm with this number already exists.
+* Takes the message number and request type as parameters
+*
+* return 1 if so and 0 otherwise.
+*/
+int check_dup_2(int num, int req){
+  int     status;
+  alarm_t *next, **last;
+
+  status = pthread_mutex_lock (&alarm_mutex);
+  if (status != 0)
+    err_abort (status, "Lock mutex");
+
+  last = &alarm_list;
+  next = *last;
+  while (next != NULL) {
+    if(next->number == num && next->request_type == req){
+
+      status = pthread_mutex_unlock (&alarm_mutex);
+      if (status != 0)
+        err_abort (status, "Unlock mutex");
+
+      return 1; // it exists already
+    }
+
+    last = &next->link;
+    next = next->link;
+  }
+  status = pthread_mutex_unlock (&alarm_mutex);
+  if (status != 0)
+    err_abort (status, "Unlock mutex");
+  return 0; // It doesn't exist.
 }
 
 /*
@@ -230,10 +305,13 @@ void alarm_insert (alarm_t *alarm){
   while (next != NULL) {
 
     /*
-    *  Replace existing alarm or insert the new alarm arranged by type and
-    *  message number.
+    * Replace existing alarm or insert the new alarm arranged by message number.
+    *
+    * If the alarm is a type B request, it will be inserted in the front as it
+    * has a Message Number of 0.
+    * If the alarm is a type C request, it will be inserted along Type A's.
     */
-    if (next->number == alarm->number){
+    if (next->number == alarm->number && alarm->request_type == TYPE_A){ //A.3.2.2
 
       // swap the nodes (Replacement)
       alarm->link = next->link;
@@ -267,8 +345,8 @@ void alarm_insert (alarm_t *alarm){
   #ifdef DEBUG
     printf ("[list: ");
     for (next = alarm_list; next != NULL; next = next->link)
-      printf ("%d(%d)[\"%s\"] ", next->time,
-    next->time - time (NULL), next->message);
+      printf ("%d(%d)[\"%s\"] ", next->number,
+    next->type, next->message);
     printf ("]\n");
   #endif
 
@@ -282,7 +360,7 @@ void alarm_insert (alarm_t *alarm){
     current_alarm = alarm->time;
     status = pthread_cond_signal (&alarm_cond);
     if (status != 0)
-    err_abort (status, "Signal cond");
+      err_abort (status, "Signal cond");
   }
 }
 
@@ -323,8 +401,8 @@ void *alarm_thread (void *arg){
     if (alarm->time > now){
 
       #ifdef DEBUG
-        printf ("[waiting: %d(%d)\"%s\"]\n", alarm->time,
-        alarm->time - time (NULL), alarm->message);
+        printf ("[waiting: %d(%d)\"%s\"]\n", (int)alarm->time,
+        (int)(alarm->time - time (NULL)), alarm->message);
       #endif
 
       cond_time.tv_sec = alarm->time;
@@ -352,7 +430,7 @@ void *alarm_thread (void *arg){
   }
 
 int main (int argc, char *argv[]){
-  int status, type, Message_Number;
+  int status;
   char line[128];
   alarm_t *alarm;
   pthread_t thread;
@@ -383,9 +461,9 @@ int main (int argc, char *argv[]){
         if (status != 0)
           err_abort (status, "Lock mutex");
         alarm->time = time (NULL) + alarm->seconds;
+        alarm->request_type = TYPE_A;
         /*
         * Insert the new alarm into the list of alarms,
-        * sorted by expiration time.
         */
         alarm_insert (alarm);
         printf("Type A Alarm Request With Message Number <%d> Received at"
@@ -393,64 +471,99 @@ int main (int argc, char *argv[]){
 
         status = pthread_mutex_unlock (&alarm_mutex);
         if (status != 0)
-          err_abort (status, "Unlock mutex"); //A.3.2.2
+          err_abort (status, "Unlock mutex");
 
       }
       /*********************END TYPE A*************************/
       /*************************TYPE B*************************/
-      else if (sscanf(line,"Create_Thread: MessageType(%d)",&type) == 1 &&
-        (type > 0 && type <= 999)){ //
-        /* creates a new alarm thread which will be responsible for perodicaly
-        * printing one or more of the Type A alarm requests with secified
-        * message type
-        *
-        * passes the Alarm Type(Type) as an argument
-        */
-        free(alarm); // deallocate alarm that isn't used
+      else if (sscanf(line,"Create_Thread: MessageType(%d)",&alarm->type) == 1 &&
+        (alarm->type > 0 && alarm->type <= 999)){ // A.3.2.3 - A.3.2.5
 
-        if(check_alarms(type) == 0){ ////////// FIX
+        /*
+        * Creates a Type B alarm that is then inserted into the alarm list.
+        * Does not allow for duplicate type B alarms.
+        * Only creates one if there exists a type A alarm of type B's
+        * Message Type.
+        */
+
+        if(check_type_a_exists(alarm->type) == 0){ // A.3.2.3
 
           printf("Type B Alarm Request Error: No Alarm Request With Message Type"
-          "(%d)!\n", type);
-        }else if(check_duplicate(type) == 1){////////// FIX
+          "(%d)!\n", alarm->type);
+          free(alarm); // deallocate alarm that isn't used
 
+        }else if(check_dup(alarm->type, TYPE_B) == 1){ // A.3.2.4
+          // May need to fix as there is confusion between "Number" and "Type"
           printf("Error: More Than One Type B Alarm Request With"
-            " Message Type (%d)!\n", type );
+            " Message Type (%d)!\n", alarm->type );
+          free(alarm); // deallocate alarm that isn't used
 
-        }else{
+        }else if(check_type_a_exists(alarm->type) == 1 &&
+                check_dup(alarm->type, TYPE_B) == 0){ //A.3.2.5
 
-          status = pthread_create (&thread, NULL, alarm_thread, &type);
+          status = pthread_mutex_lock (&alarm_mutex);
           if (status != 0)
-            err_abort (status, "Create alarm thread");
+            err_abort (status, "Lock mutex");
+          alarm->time = time (NULL) + alarm->seconds;
+          alarm->request_type = TYPE_B;
           /*
-          * add the id of the created thread to the array lot[][]
+          * Insert the new alarm into the list of alarms,
           */
-          lot[type][0] += 1; // increment # of threads of that type by 1
-          int ind = lot[type][0]; // the index to store our new thread's Id
-          lot[type][ind] = thread;
+          alarm_insert (alarm);
+          printf("Type B Create Thread Alarm Request With Message Type (%d)"
+          " Inserted Into Alarm List at <%d>!\n", alarm->type, (int)time(NULL));
 
-          printf("New Alarm Thread <%lu> For Message Type (%d) Created"
-          " at <%d>: <Type B>\n", thread, type, (int)time(NULL) );
+          status = pthread_mutex_unlock (&alarm_mutex);
+          if (status != 0)
+            err_abort (status, "Unlock mutex");
+
         }
       }
       /*********************END TYPE B*************************/
       /*************************TYPE C*************************/
-      else if (sscanf (line, "Cancel: Message(%d)", &Message_Number) == 1 &&
-        Message_Number > 0 ){ //
-        /* Terminates all the existing alarm threads responsilbe for
-        * periodically printing Type A alarm requests with secified
-        * message type (type).
-        *
-        * terminate all Threads
-        * Remove all alrms with the specified type from the list.
+      else if (sscanf (line, "Cancel: Message(%d)", &alarm->number) == 1 &&
+        alarm->number > 0 ){ //
+        /*
+        * Creates a Type C alarm that is then inserted into the alarm list.
+        * Does not allow for duplicate type  alarms.
+        * Only creates one if there exists a type A alarm of type C's Message
+        * Type.
         */
-        free(alarm);
-        //terminate(type);
-        //remove_alarms(type, &alarm_list);
 
-        printf("All Alarm Threads For Message Type (%d) Terminated and"
-        " All Messages of Message Type Removed at <%d>: <Type C>\n",
-        type, (int) time(NULL));
+        if (check_number_a_exists(alarm->number) == 0){ // A.3.2.6
+
+          printf("Error: No Alarm Request With Message"
+            " Number (%d) to Cancel!\n", alarm->number );
+          free(alarm);
+
+        }else if (check_dup_2(alarm->number, TYPE_C) == 1){ // A.3.2.7
+
+          printf("Error: More Than One Request to Cancel Alarm Request With"
+            " Message Number (%d)!\n", alarm->number);
+          free(alarm);
+
+        }else if (check_number_a_exists(alarm->number) == 1 &&
+            check_dup_2(alarm->number, TYPE_C) == 0 ){ // A.3.2.8
+
+          status = pthread_mutex_lock (&alarm_mutex);
+          if (status != 0)
+            err_abort (status, "Lock mutex");
+          alarm->time = time (NULL) + alarm->seconds;
+          alarm->request_type = TYPE_C;
+
+          /*
+          * Insert the new alarm into the list of alarms.
+          */
+          alarm_insert (alarm);
+          printf("Type C Cancel Alarm Request With Message Number (%d)"
+            " Inserted Into Alarm List at <%d>: <Type C>\n", alarm->number,
+                (int)time(NULL));
+
+          status = pthread_mutex_unlock (&alarm_mutex);
+          if (status != 0)
+            err_abort (status, "Unlock mutex");
+
+        }
 
       }
       /*********************END TYPE C*************************/
@@ -460,3 +573,27 @@ int main (int argc, char *argv[]){
       }
   }
 }
+
+
+////// back up for code
+// lot[type][0] += 1; // increment # of threads of that type by 1
+// int ind = lot[type][0]; // the index to store our new thread's Id
+// lot[type][ind] = thread;
+
+
+// status = pthread_mutex_lock (&alarm_mutex);
+// if (status != 0)
+//   err_abort (status, "Lock mutex");
+// alarm->time = time (NULL) + alarm->seconds;
+// alarm->request_type = TYPE_A;
+// /*
+// * Insert the new alarm into the list of alarms,
+// * sorted by expiration time.
+// */
+// alarm_insert (alarm);
+// printf("Type A Alarm Request With Message Number <%d> Received at"
+// " time <%d>: <Type A>\n", alarm->number, (int)time(NULL));
+//
+// status = pthread_mutex_unlock (&alarm_mutex);
+// if (status != 0)
+//   err_abort (status, "Unlock mutex");

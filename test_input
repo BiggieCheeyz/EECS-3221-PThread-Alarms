@@ -2,10 +2,16 @@
 
 2 MessageType(4, 5) Testing
 
-2 MessageType(4, 8) Testing
+2 MessageType(4, 22) Testing
 
-2 MessageType(5, 1) Testing
+Create_Thread: MessageType(4)
 
-2 MessageType(3, 5) Testing
+Create_Thread: MessageType(4)
 
-2 MessageType(3, 5) Replacement
+Create_Thread: MessageType(5)
+
+Cancel: Message(1)
+
+Cancel: Message(1)
+
+Cancel: Message(2)
