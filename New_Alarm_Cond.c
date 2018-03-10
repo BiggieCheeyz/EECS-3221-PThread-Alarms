@@ -688,7 +688,7 @@ void *alarm_thread (void *arg){
         free (alarm);
       }
     }
-  }
+  } // end PART 2
 }
 
 int main (int argc, char *argv[]){
