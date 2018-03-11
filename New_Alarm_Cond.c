@@ -500,6 +500,10 @@ void *alarm_thread (void *arg){
 
   /*
   * PART 1 : INITIAL THREAD
+  * checks alarm requests in the alarm list whenever a Type A or Type B or
+  * Type C alarm request has been inserted into the alarm list.
+  *
+  * A3.3
   */
   if (arg == NULL){
 
@@ -537,6 +541,13 @@ void *alarm_thread (void *arg){
       * beggining of the list and itterate through again. This happens bacause
       * the outter loop calls the 2 lines immediatly following this comment
       * again.
+      *
+      * Because each alarm has an attribute "is_new", they can only be performed
+      * once. only when a new alarm is inserted will this thread carry out any
+      * task.
+      *
+      * (**NOTE TO PROGRAMMER** instead of continously looping. you can use a
+      * flag to notify the outter loop that an new alarm has been inserted. **)
       */
       last = &alarm_list;
       next = *last;
@@ -626,6 +637,10 @@ void *alarm_thread (void *arg){
   }
   /*
   * PART 2 : TYPE B CREATED THREAD (periodic display thread).
+  * responsible for periodically looking up a Type A alarm request with a
+  * Message Type in the alarm list, then printing, every Time seconds.
+  *
+  * A3.4
   */
   else{
 
@@ -688,7 +703,7 @@ void *alarm_thread (void *arg){
         free (alarm);
       }
     }
-  } // end PART 2
+  } // end PART 2 periodic display thread
 }
 
 int main (int argc, char *argv[]){
