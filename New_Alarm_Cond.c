@@ -492,262 +492,245 @@ void alarm_insert (alarm_t *alarm){
   }
 }
 
+
+/*
+* PART 2 : TYPE B CREATED THREAD (periodic display thread).
+* responsible for periodically looking up a Type A alarm request with a
+* Message Type in the alarm list, then printing, every Time seconds.
+*
+* A3.4
+*/
+void *periodic_display_thread(void *arg){
+  alarm_t *alarm = alarm_list;
+  struct timespec cond_time;
+  time_t now;
+  int status, expired, flag;
+
+  int *arg_pointer = arg;
+  int type = *arg_pointer; // parameter passed by the create thread call
+
+  /*
+  * Loop forever, processing Type A alarms of specified message type.
+  * The alarm thread will be disintegrated when the process exits.
+  * Lock the mutex at the start -- it will be unlocked during condition
+  * waits, so the main thread can insert alarms.
+  */
+  status = pthread_mutex_lock (&alarm_mutex);
+  if (status != 0)
+  err_abort (status, "Lock mutex");
+  while (1){
+    /*
+    * If the alarm list is empty, wait until an alarm is
+    * added. Setting current_alarm to 0 informs the insert
+    * routine that the thread is not busy.
+    */
+    current_alarm = 0;
+    while (alarm_list == NULL){
+      status = pthread_cond_wait (&alarm_cond, &alarm_mutex);
+      if (status != 0)
+        err_abort (status, "Wait on cond");
+    }
+    /////
+    if (flag == 1){ // go back to the beginning
+      alarm = alarm_list;
+      flag = 0;
+    }
+
+    if (alarm->link == NULL){
+      flag = 1; // go back to the beginning pf the list
+    }
+    /////
+
+    if(alarm->type = type && check_prev(alarm) == 0){ // check A.3.4.2
+      alarm->exposed = 1;
+      printf("Alarm With Message Type (%d) Replaced at <%d>: "
+      "<Type A>\n", alarm->type, (int)alarm->time ); // A.3.4.2
+      alarm = alarm->link; // go to the next node on the list
+    }
+    else{
+      now = time (NULL);
+      expired = 0;
+      if (alarm->time > now && alarm->type == type){ // WAIT
+
+        // #ifdef DEBUG
+        // printf ("[waiting: %d(%d)\"%s\"]\n", (int)alarm->time,
+        // (int)(alarm->time - time (NULL)), alarm->message);
+        // #endif
+
+        cond_time.tv_sec = alarm->time;
+        cond_time.tv_nsec = 0;
+        current_alarm = alarm->time;
+        while (current_alarm == alarm->time){
+          status = pthread_cond_timedwait (&alarm_cond, &alarm_mutex, &cond_time);
+          if (status == ETIMEDOUT){
+            expired = 1;
+            break;
+          }
+          if (status != 0)
+            err_abort (status, "Cond timedwait");
+        }
+        if (!expired){
+          //alarm_insert (alarm); // dont remove the alarm
+        }
+      }
+      else if(alarm->type == type){ // EXPIRED
+        expired = 1;
+      }
+
+      if (expired) { // PRINT MESSAGE // A.3.4.1
+        printf ("%s\n", alarm->message);
+        printf("Alarm With Message Type (%d) and Message Number"
+        " (%d) Displayed at <%d>: <Type A>\n",
+        alarm->type, alarm->number, (int)time(NULL) );
+
+        //free (alarm); // dont deallocate the alarm
+      }
+      alarm = alarm->link; // go to the next node on the list
+    }
+  }
+}
+
 /*
 * The alarm thread's start routine.
 *
-* has 2 parts.
 *
 * PART 1: An initial thread which is responsible for looping through the
 * alarm list and checking the status of each type A alarm, as well as performing
 * type B or C requests as they are inserted.
 *
-* PART 2: A created thread which is going to be th instantiation of a type B
-* request. this part will be responsible for printing out type A alarm requests.
-*
-* The argument passed to the thread determines what part will be performed. If
-* the argument is NULL, it is the start of the initial thread (this can only
-* happen once). if the argument is not NULL, it is the start of a Type B alarm
-* requests thread.
-*
-*
+* A3.3
 */
 void *alarm_thread (void *arg){
 
 
+  alarm_t **last, *next;
+  struct timespec cond_time;
+  int status;
+
   /*
-  * PART 1 : INITIAL THREAD
-  * checks alarm requests in the alarm list whenever a Type A or Type B or
-  * Type C alarm request has been inserted into the alarm list.
-  *
-  * A3.3
+  * continuously loop through the alarm list examining each alarm request
+  * Lock the mutex at thhe start -- it will be unlocked during condition waits
+  * so the main thread can insert alarms.
   */
-  if (arg == NULL){
+  status = pthread_mutex_lock (&alarm_mutex);
+  if (status != 0)
+  err_abort (status, "Lock mutex");
 
-    alarm_t **last, *next;
-    struct timespec cond_time;
-    int status;
-
+  while(1){
     /*
-    * continuously loop through the alarm list examining each alarm request
-    * Lock the mutex at thhe start -- it will be unlocked during condition waits
-    * so the main thread can insert alarms.
+    * If the alarm list is empty, wait until an alarm is
+    * added. Setting current_alarm to 0 informs the insert
+    * routine that the thread is not busy.
     */
-    status = pthread_mutex_lock (&alarm_mutex);
-    if (status != 0)
-    err_abort (status, "Lock mutex");
-
-    while(1){
-      /*
-      * If the alarm list is empty, wait until an alarm is
-      * added. Setting current_alarm to 0 informs the insert
-      * routine that the thread is not busy.
-      */
-      current_alarm = 0;
-      while (alarm_list == NULL){
-        status = pthread_cond_wait (&alarm_cond, &alarm_mutex);
-        if (status != 0)
-        err_abort (status, "Wait on cond");
-      }
-
-      /*
-      * loop through the alarm list checking the request types and performing
-      * the operations that are within these alarms
-      *
-      * When itteration has finished, it will automatically go back to the
-      * beggining of the list and itterate through again. This happens bacause
-      * the outter loop calls the 2 lines immediatly following this comment
-      * again.
-      *
-      * Because each alarm has an attribute "is_new", they can only be performed
-      * once. only when a new alarm is inserted will this thread carry out any
-      * task.
-      *
-      * (**NOTE TO PROGRAMMER** instead of continously looping. you can use a
-      * flag to notify the outter loop that an new alarm has been inserted. **)
-      */
-      last = &alarm_list;
-      next = *last;
-      while(next != NULL){
-
-        /*
-        * upon finding a new type A alarm, checks if there exists a useless
-        * periodic display thread and terminates if such thread exists.
-        */
-        if(next->type == TYPE_A){ // A.3.3.1
-          if(next->is_new == 1){
-            next->is_new = 0; // alarm is no longer new
-            status = check_useless_thread();
-          }
-        }
-
-        /*
-        * upon finding a new type B alarm, creates a periodic display thread
-        * responsible for printing messages its specified type
-        */
-        if(next->type == TYPE_B){ // A.3.3.2
-
-          next->is_new = 0; // alarm is no longer new
-          thread_t *thrd;
-          pthread_t thread;
-
-
-          thrd = (thread_t*)malloc (sizeof (thread_t)); //allocate thread struct
-          if (thrd == NULL)
-          errno_abort ("Allocate Thread");
-
-          /* create a thread for periodically printing messages
-          * // will pass an argument (Most likely message type)
-          */
-          status = pthread_create (&thread, NULL, alarm_thread, &next->type);
-          if (status != 0)
-          err_abort (status, "Create alarm thread"); // A.3.3.2 (a)
-          thrd->type = next->type; // set the attributes for the thread struct
-          thrd->thread_id = thread;
-
-          insert_thread(thrd);
-
-          printf("Type B Alarm Request Processed at <%d>: New Periodic Dis"
-          "play Thread With Message Type (%d) Created.\n", (int)(time(NULL)),
-          next->type ); // A.3.3.2 (b)
-        }
-
-
-        /*
-        * upon finding a new type C alarm, removes the alarm of the message
-        * number specified by the Type C alarm from the alarm list.
-        *
-        * if there are no more alarm requests in the alarm list the same type as
-        * the one that was just removed, terminate the periodic display thread
-        * responsible for displaying those messages.
-        */
-        if(next->type == TYPE_C){ //A.3.3.3
-          if(next->is_new == 1){
-
-            next->is_new == 0; // alarm is no longer new
-            int val = remove_alarm(next->number); // A.3.3.3 (a)
-
-            if(val != 0){ // A.3.3.3 (c)
-              printf("Type C Alarm Request Processed at <%d>: Alarm Request"
-              " With Message Number (%d) Removed\n", (int)(time(NULL)),
-              next->number);
-            }
-
-
-            if(check_type_a_exists(val) == 0){ // A.3.3.3 (b)
-              terminate_thread(val);
-              printf("No More Alarm Requests With Message Type (%d):"
-              " Periodic Display Thread For Message Type (%d)"
-              " Terminated.\n", next->type, next->type); // A.3.3.3 (d)
-            }
-          }
-        }
-      }// end while
-
-
-      // unlocks the mutex when list itteration has finished
-      status = pthread_mutex_unlock(&alarm_mutex);
+    current_alarm = 0;
+    while (alarm_list == NULL){
+      status = pthread_cond_wait (&alarm_cond, &alarm_mutex);
       if (status != 0)
-      err_abort(status, "Unlock Mutex");
-
+      err_abort (status, "Wait on cond");
     }
-  }
-  /*
-  * PART 2 : TYPE B CREATED THREAD (periodic display thread).
-  * responsible for periodically looking up a Type A alarm request with a
-  * Message Type in the alarm list, then printing, every Time seconds.
-  *
-  * A3.4
-  */
-  else{
-
-    alarm_t *alarm = alarm_list;
-    struct timespec cond_time;
-    time_t now;
-    int status, expired, flag;
-
-    int *arg_pointer = arg;
-    int type = *arg_pointer; // parameter passed by the create thread call
 
     /*
-    * Loop forever, processing Type A alarms of specified message type.
-    * The alarm thread will be disintegrated when the process exits.
-    * Lock the mutex at the start -- it will be unlocked during condition
-    * waits, so the main thread can insert alarms.
+    * loop through the alarm list checking the request types and performing
+    * the operations that are within these alarms
+    *
+    * When itteration has finished, it will automatically go back to the
+    * beggining of the list and itterate through again. This happens bacause
+    * the outter loop calls the 2 lines immediatly following this comment
+    * again.
+    *
+    * Because each alarm has an attribute "is_new", they can only be performed
+    * once. only when a new alarm is inserted will this thread carry out any
+    * task.
+    *
+    * (**NOTE TO PROGRAMMER** instead of continously looping. you can use a
+    * flag to notify the outter loop that an new alarm has been inserted. **)
     */
-    status = pthread_mutex_lock (&alarm_mutex);
-    if (status != 0)
-    err_abort (status, "Lock mutex");
-    while (1){
+    last = &alarm_list;
+    next = *last;
+    while(next != NULL){
+
       /*
-      * If the alarm list is empty, wait until an alarm is
-      * added. Setting current_alarm to 0 informs the insert
-      * routine that the thread is not busy.
+      * upon finding a new type A alarm, checks if there exists a useless
+      * periodic display thread and terminates if such thread exists.
       */
-      current_alarm = 0;
-      while (alarm_list == NULL){
-        status = pthread_cond_wait (&alarm_cond, &alarm_mutex);
+      if(next->request_type == TYPE_A){ // A.3.3.1
+        if(next->is_new == 1){
+          next->is_new = 0; // alarm is no longer new
+          status = check_useless_thread();
+        }
+      }
+
+      /*
+      * upon finding a new type B alarm, creates a periodic display thread
+      * responsible for printing messages its specified type
+      */
+      if(next->request_type == TYPE_B){ // A.3.3.2
+
+        next->is_new = 0; // alarm is no longer new
+        thread_t *thrd;
+        pthread_t thread;
+
+
+        thrd = (thread_t*)malloc (sizeof (thread_t)); //allocate thread struct
+        if (thrd == NULL)
+        errno_abort ("Allocate Thread");
+
+        /* create a thread for periodically printing messages
+        * // will pass an argument (Most likely message type)
+        */
+        status = pthread_create(&thread, NULL, periodic_display_thread,
+           &next->type);
         if (status != 0)
-          err_abort (status, "Wait on cond");
-      }
-      /////
-      if (flag == 1){ // go back to the beginning
-        alarm = alarm_list;
-        flag = 0;
+        err_abort (status, "Create alarm thread"); // A.3.3.2 (a)
+        thrd->type = next->type; // set the attributes for the thread struct
+        thrd->thread_id = thread;
+
+        insert_thread(thrd);
+
+        printf("Type B Alarm Request Processed at <%d>: New Periodic Dis"
+        "play Thread With Message Type (%d) Created.\n", (int)(time(NULL)),
+        next->type ); // A.3.3.2 (b)
       }
 
-      if (alarm->link == NULL){
-        flag = 1; // go back to the beginning pf the list
-      }
-      /////
 
-      if(alarm->type = type && check_prev(alarm) == 0){ // check A.3.4.2
-        alarm->exposed = 1;
-        printf("Alarm With Message Type (%d) Replaced at <%d>: "
-        "<Type A>\n", alarm->type, (int)alarm->time ); // A.3.4.2
-        alarm = alarm->link; // go to the next node on the list
-      }
-      else{
-        now = time (NULL);
-        expired = 0;
-        if (alarm->time > now && alarm->type == type){ // WAIT
+      /*
+      * upon finding a new type C alarm, removes the alarm of the message
+      * number specified by the Type C alarm from the alarm list.
+      *
+      * if there are no more alarm requests in the alarm list the same type as
+      * the one that was just removed, terminate the periodic display thread
+      * responsible for displaying those messages.
+      */
+      if(next->request_type == TYPE_C){ //A.3.3.3
+        if(next->is_new == 1){
 
-          // #ifdef DEBUG
-          // printf ("[waiting: %d(%d)\"%s\"]\n", (int)alarm->time,
-          // (int)(alarm->time - time (NULL)), alarm->message);
-          // #endif
+          next->is_new == 0; // alarm is no longer new
+          int val = remove_alarm(next->number); // A.3.3.3 (a)
 
-          cond_time.tv_sec = alarm->time;
-          cond_time.tv_nsec = 0;
-          current_alarm = alarm->time;
-          while (current_alarm == alarm->time){
-            status = pthread_cond_timedwait (&alarm_cond, &alarm_mutex, &cond_time);
-            if (status == ETIMEDOUT){
-              expired = 1;
-              break;
-            }
-            if (status != 0)
-              err_abort (status, "Cond timedwait");
+          if(val != 0){ // A.3.3.3 (c)
+            printf("Type C Alarm Request Processed at <%d>: Alarm Request"
+            " With Message Number (%d) Removed\n", (int)(time(NULL)),
+            next->number);
           }
-          if (!expired){
-            //alarm_insert (alarm); // dont remove the alarm
+
+
+          if(check_type_a_exists(val) == 0){ // A.3.3.3 (b)
+            terminate_thread(val);
+            printf("No More Alarm Requests With Message Type (%d):"
+            " Periodic Display Thread For Message Type (%d)"
+            " Terminated.\n", next->type, next->type); // A.3.3.3 (d)
           }
         }
-        else if(alarm->type == type){ // EXPIRED
-          expired = 1;
-        }
-
-        if (expired) { // PRINT MESSAGE // A.3.4.1
-          printf ("%s\n", alarm->message);
-          printf("Alarm With Message Type (%d) and Message Number"
-          " (%d) Displayed at <%d>: <Type A>\n",
-          alarm->type, alarm->number, (int)time(NULL) );
-
-          //free (alarm); // dont deallocate the alarm
-        }
-        alarm = alarm->link; // go to the next node on the list
       }
-    }
-  } // end PART 2 periodic display thread
+    }// end while
+
+
+    // unlocks the mutex when list itteration has finished
+    status = pthread_mutex_unlock(&alarm_mutex);
+    if (status != 0)
+    err_abort(status, "Unlock Mutex");
+
+  }
 }
 
 int main (int argc, char *argv[]){
@@ -915,23 +898,3 @@ int main (int argc, char *argv[]){
     }
   }
 }
-
-// CODE BACK UP
-// thrd = (thread_t*)malloc (sizeof (thread_t)); //allocate thread struct
-// if (thrd == NULL)
-//   errno_abort ("Allocate Thread");
-//
-// /* create a thread for periodically printing messages
-// * // will pass an argument (Most likely message type)
-// */
-// status = pthread_create (&thread, NULL, alarm_thread, NULL);
-// if (status != 0)
-//     err_abort (status, "Create alarm thread");
-// thrd->type = alarm->type; // set the attributes for the thread struct
-// thrd->thread_id = thread;
-//
-// insert_thread(thrd);
-
-
-// int *arg_pointer = arg;
-//   int look_for = *arg_pointer;
