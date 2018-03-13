@@ -29,10 +29,12 @@ typedef struct alarm_tag {
   char                message[128];
 
   /******* new additions to the alarm_tag structure ********/
-  int               type; //identifies the message type ( type >= 1 )'
+  int               type; //identifies the message type ( type >= 1 )
+  int               prev_type; // previous message type
   int               is_new; // 1 == "new" and 0 == "old/not new"
   int               number; /* Message Number */
   int               request_type; // TypeA == 1 TypeB == 2 TypeC == 3
+  int               exposed; // 1 if thread has checked that type != prev_type
   /*******************end new additions***************/
 } alarm_t;
 
@@ -181,6 +183,19 @@ void terminate_thread(int type){
     return;
   }
 
+}
+
+/*
+* checks if an alarm's previous type was the same or not
+*
+* returns 1 if so and 0 otherwise
+*/
+int check_prev(alarm_t *a){
+  if (a == NULL || a->prev_type == 0 || a->exposed == 1) return 0;
+
+  if(a->type == a->prev_type) return 1;
+
+  return 0;
 }
 
 /*
@@ -427,6 +442,7 @@ void alarm_insert (alarm_t *alarm){
 
       // swap the nodes (Replacement)
       alarm->link = next->link;
+      alarm->prev_type = next->type;
       *last = alarm;
       free(next);
       printf("Type A Replacement Alarm Request With Message Number (%d) "
@@ -644,15 +660,18 @@ void *alarm_thread (void *arg){
   */
   else{
 
-    alarm_t *alarm;
+    alarm_t *alarm = alarm_list;
     struct timespec cond_time;
     time_t now;
-    int status, expired;
+    int status, expired, flag;
+
+    int *arg_pointer = arg;
+    int type = *arg_pointer; // parameter passed by the create thread call
 
     /*
-    * Loop forever, processing commands. The alarm thread will
-    * be disintegrated when the process exits. Lock the mutex
-    * at the start -- it will be unlocked during condition
+    * Loop forever, processing Type A alarms of specified message type.
+    * The alarm thread will be disintegrated when the process exits.
+    * Lock the mutex at the start -- it will be unlocked during condition
     * waits, so the main thread can insert alarms.
     */
     status = pthread_mutex_lock (&alarm_mutex);
@@ -668,39 +687,63 @@ void *alarm_thread (void *arg){
       while (alarm_list == NULL){
         status = pthread_cond_wait (&alarm_cond, &alarm_mutex);
         if (status != 0)
-        err_abort (status, "Wait on cond");
+          err_abort (status, "Wait on cond");
       }
-      alarm = alarm_list;
-      alarm_list = alarm->link;
-      now = time (NULL);
-      expired = 0;
-      if (alarm->time > now){
+      /////
+      if (flag == 1){ // go back to the beginning
+        alarm = alarm_list;
+        flag = 0;
+      }
 
-        #ifdef DEBUG
-        printf ("[waiting: %d(%d)\"%s\"]\n", (int)alarm->time,
-        (int)(alarm->time - time (NULL)), alarm->message);
-        #endif
+      if (alarm->link == NULL){
+        flag = 1; // go back to the beginning pf the list
+      }
+      /////
 
-        cond_time.tv_sec = alarm->time;
-        cond_time.tv_nsec = 0;
-        current_alarm = alarm->time;
-        while (current_alarm == alarm->time){
-          status = pthread_cond_timedwait (&alarm_cond, &alarm_mutex, &cond_time);
-          if (status == ETIMEDOUT){
-            expired = 1;
-            break;
+      if(alarm->type = type && check_prev(alarm) == 0){ // check A.3.4.2
+        alarm->exposed = 1;
+        printf("Alarm With Message Type (%d) Replaced at <%d>: "
+        "<Type A>\n", alarm->type, (int)alarm->time ); // A.3.4.2
+        alarm = alarm->link; // go to the next node on the list
+      }
+      else{
+        now = time (NULL);
+        expired = 0;
+        if (alarm->time > now && alarm->type == type){ // WAIT
+
+          // #ifdef DEBUG
+          // printf ("[waiting: %d(%d)\"%s\"]\n", (int)alarm->time,
+          // (int)(alarm->time - time (NULL)), alarm->message);
+          // #endif
+
+          cond_time.tv_sec = alarm->time;
+          cond_time.tv_nsec = 0;
+          current_alarm = alarm->time;
+          while (current_alarm == alarm->time){
+            status = pthread_cond_timedwait (&alarm_cond, &alarm_mutex, &cond_time);
+            if (status == ETIMEDOUT){
+              expired = 1;
+              break;
+            }
+            if (status != 0)
+              err_abort (status, "Cond timedwait");
           }
-          if (status != 0)
-          err_abort (status, "Cond timedwait");
+          if (!expired){
+            //alarm_insert (alarm); // dont remove the alarm
+          }
         }
-        if (!expired)
-          alarm_insert (alarm);
-      }else{
-        expired = 1;
-      }
-      if (expired) {
-        printf ("(%d) %s\n", alarm->seconds, alarm->message);
-        free (alarm);
+        else if(alarm->type == type){ // EXPIRED
+          expired = 1;
+        }
+
+        if (expired) { // PRINT MESSAGE // A.3.4.1
+          printf("Alarm With Message Type (%d) and Message Number"
+          " (%d) Displayed at <%d>: <Type A>\n",
+          alarm->type, alarm->number, (int)time(NULL) );
+          //printf ("(%d) %s\n", alarm->seconds, alarm->message);
+          //free (alarm); // dont deallocate the alarm
+        }
+        alarm = alarm->link; // go to the next node on the list
       }
     }
   } // end PART 2 periodic display thread
