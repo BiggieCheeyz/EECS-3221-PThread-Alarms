@@ -737,10 +737,11 @@ void *alarm_thread (void *arg){
         }
 
         if (expired) { // PRINT MESSAGE // A.3.4.1
+          printf ("%s\n", alarm->message);
           printf("Alarm With Message Type (%d) and Message Number"
           " (%d) Displayed at <%d>: <Type A>\n",
           alarm->type, alarm->number, (int)time(NULL) );
-          //printf ("(%d) %s\n", alarm->seconds, alarm->message);
+
           //free (alarm); // dont deallocate the alarm
         }
         alarm = alarm->link; // go to the next node on the list
