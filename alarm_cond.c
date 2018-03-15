@@ -14,6 +14,8 @@
 #include <time.h>
 #include "errors.h"
 
+#define DEBUG
+
 /*
 * The "alarm" structure now contains the time_t (time since the
 * Epoch, in seconds) for each alarm, so that they can be
@@ -105,51 +107,52 @@ void *alarm_thread (void *arg){
   */
   status = pthread_mutex_lock (&alarm_mutex);
   if (status != 0)
-    err_abort (status, "Lock mutex");
+  err_abort (status, "Lock mutex");
   while (1) {
-    /*
-    * If the alarm list is empty, wait until an alarm is
-    * added. Setting current_alarm to 0 informs the insert
-    * routine that the thread is not busy.
-    */
-    current_alarm = 0;
-    while (alarm_list == NULL) {
-      status = pthread_cond_wait (&alarm_cond, &alarm_mutex);
-      if (status != 0)
-        err_abort (status, "Wait on cond");
-    }
-    alarm = alarm_list;
-    alarm_list = alarm->link;
-    now = time (NULL);
-    expired = 0;
-    if (alarm->time > now) {
-      #ifdef DEBUG
-        printf ("[waiting: %d(%d)\"%s\"]\n", alarm->time,
-        alarm->time - time (NULL), alarm->message);
-      #endif
-      cond_time.tv_sec = alarm->time;
-      cond_time.tv_nsec = 0;
-      current_alarm = alarm->time;
-      while (current_alarm == alarm->time) {
-        status = pthread_cond_timedwait (
-          &alarm_cond, &alarm_mutex, &cond_time);
-          if (status == ETIMEDOUT) {
-            expired = 1;
-            break;
-          }
-          if (status != 0)
-          err_abort (status, "Cond timedwait");
+  /*
+  * If the alarm list is empty, wait until an alarm is
+  * added. Setting current_alarm to 0 informs the insert
+  * routine that the thread is not busy.
+  */
+  current_alarm = 0;
+  while (alarm_list == NULL) {
+    status = pthread_cond_wait (&alarm_cond, &alarm_mutex);
+    if (status != 0)
+      err_abort (status, "Wait on cond");
+  }
+  alarm = alarm_list;
+  alarm_list = alarm->link;
+  now = time (NULL);
+  expired = 0;
+  if (alarm->time > now) {
+    #ifdef DEBUG
+      printf("alarm time: %d now: %d\n", alarm->time, now );
+      printf ("[waiting: %d(%d)\"%s\"]\n", alarm->time,
+      alarm->time - time (NULL), alarm->message);
+    #endif
+    cond_time.tv_sec = alarm->time;
+    cond_time.tv_nsec = 0;
+    current_alarm = alarm->time;
+    while (current_alarm == alarm->time) {
+      status = pthread_cond_timedwait (
+        &alarm_cond, &alarm_mutex, &cond_time);
+        if (status == ETIMEDOUT) {
+          expired = 1;
+          break;
         }
-        if (!expired)
-        alarm_insert (alarm);
-      } else
-      expired = 1;
-      if (expired) {
-        printf ("(%d) %s\n", alarm->seconds, alarm->message);
-        free (alarm);
+        if (status != 0)
+        err_abort (status, "Cond timedwait");
       }
+      if (!expired)
+      alarm_insert (alarm);
+    } else
+    expired = 1;
+    if (expired) {
+      printf ("(%d) %s\n", alarm->seconds, alarm->message);
+      free (alarm);
     }
   }
+}
 
   int main (int argc, char *argv[])
   {
