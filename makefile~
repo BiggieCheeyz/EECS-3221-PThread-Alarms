@@ -1,0 +1,2 @@
+New_Alarm_Cond:	New_Alarm_Cond.c
+	gcc -g New_Alarm_Cond.c -D_POSIX_PTHREAD_SEMANTICS -lpthread
