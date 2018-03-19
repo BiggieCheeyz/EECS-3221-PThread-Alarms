@@ -71,6 +71,10 @@ int insert_flag; //1 if a new alarm has been inserted. set to 0 after processing
 
 /***************************HELPER CODE***************************//////////////
 
+/*
+* prints out contents of the thread list
+*  For debugging
+*/
 void test(){
   thread_t **last, *next;
 
@@ -166,13 +170,11 @@ void terminate_thread(int type){
 
       *last = next->link;
       free(next);
-      test(); // FOR DEBUGGING
       break; // remove the thread the Alarm.
      }
      last = &next->link;
      next = next->link;
     }
-
 
   /*
   * If we reached the end of the list, stop
@@ -501,7 +503,7 @@ void *periodic_display_thread(void *arg){
       flag = 0;
     }
     if (alarm->link == NULL){
-      flag = 1; // go back to the beginning pf the list
+      flag = 1; // go back to the beginning of the list
     }
     /////
 
@@ -531,8 +533,8 @@ void *periodic_display_thread(void *arg){
       alarm->time = now + alarm->seconds; // alarm time from "now"
       expired = 0; // has not yet expired.
 
-      
-      if (alarm->time > now){ // WAIT 
+
+      if (alarm->time > now){ // WAIT
 
         #ifdef DEBUG
         printf ("[waiting: %d(%d)\"%s\"]\n", (int)alarm->time,
@@ -551,20 +553,16 @@ void *periodic_display_thread(void *arg){
           if (status != 0)
             err_abort (status, "Cond timedwait");
         }
-        if (!expired){
-          //alarm_insert (alarm); // NAH FAM!
-        }
       }
       else{ // EXPIRED
         expired = 1;
       }
       if (expired) { // PRINT MESSAGE // A.3.4.1
-        printf ("%s > ", alarm->message);
+        printf ("%d > ", alarm->seconds);
+        //printf ("%s > ", alarm->message);
         printf("Alarm With Message Type (%d) and Message Number"
         " (%d) Displayed at <%d>: <Type A>\n",
         alarm->type, alarm->number, (int)time(NULL) );
-
-        //free (alarm); // dont deallocate the alarm
       }
     }
     alarm = alarm->link; // go to the next node on the list
@@ -693,10 +691,11 @@ void *alarm_thread (void *arg){
       * responsible for displaying those messages.
       */
       if(next->request_type == TYPE_C){ //A.3.3.3
+        int val;
         if(next->is_new == 1){
 
           next->is_new == 0; // alarm is no longer new
-          int val = remove_alarm(next->number); // A.3.3.3 (a)
+          val = remove_alarm(next->number); // A.3.3.3 (a)
 
           if(val != 0){ // A.3.3.3 (c)
             printf("Type C Alarm Request Processed at <%d>: Alarm Request"
@@ -719,7 +718,7 @@ void *alarm_thread (void *arg){
 
             printf("No More Alarm Requests With Message Type (%d):"
             " Periodic Display Thread For Message Type (%d)"
-            " Terminated.\n", next->type, next->type); // A.3.3.3 (d)
+            " Terminated.\n", val, val); // A.3.3.3 (d)
           }
         }
       }// END TYPE C
@@ -821,7 +820,7 @@ int main (int argc, char *argv[]){
 
         alarm->request_type = TYPE_B;
         alarm->is_new = 1;
-        
+
         /*
         * Insert the new alarm into the list of alarms
         * Insert the new thread into the list of threads
