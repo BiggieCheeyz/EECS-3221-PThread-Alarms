@@ -81,7 +81,7 @@ void test(){
 
   last = &thread_list;
   next = *last;
-  
+
   alast = &alarm_list;
   anext = *alast;
 
@@ -89,7 +89,7 @@ void test(){
   for (next = thread_list; next != NULL; next = next->link)
     printf ("%d <%lu> ", next->type, next->thread_id);
   printf ("]\n");
-  
+
   printf ("[Alarm List: ");
     for (anext = alarm_list; anext != NULL; anext = anext->link)
       printf (" {Request Type = %d Alarm # = %d type = %d} ",
@@ -383,13 +383,12 @@ int remove_alarm(int number){
      last = &next->link;
      next = next->link;
   }
-  
+
   test(); // FOR DEBUGGING
 
   return val;
 
 }
-/***************************END HELPER CODE***************************//////////
 
 /*
 * Insert alarm entry on list, in order of message number.
@@ -468,6 +467,7 @@ void alarm_insert (alarm_t *alarm){
       err_abort (status, "Signal cond");
   }
 }
+/***************************END HELPER CODE***************************//////////
 
 
 /*
