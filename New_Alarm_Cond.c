@@ -72,19 +72,28 @@ int insert_flag; //1 if a new alarm has been inserted. set to 0 after processing
 /***************************HELPER CODE***************************//////////////
 
 /*
-* prints out contents of the thread list
-*  For debugging
+* prints out contents of the thread list as well as the contents of the alarm
+* list for debugging
 */
 void test(){
   thread_t **last, *next;
+  alarm_t **alast, *anext;
 
   last = &thread_list;
   next = *last;
+  
+  alast = &alarm_list;
+  anext = *alast;
 
-  printf ("[list: ");
+  printf ("[Thread List: ");
   for (next = thread_list; next != NULL; next = next->link)
-    printf ("%d <%lu> ", next->type,
-  next->thread_id);
+    printf ("%d <%lu> ", next->type, next->thread_id);
+  printf ("]\n");
+  
+  printf ("[Alarm List: ");
+    for (anext = alarm_list; anext != NULL; anext = anext->link)
+      printf (" {Request Type = %d Alarm # = %d type = %d} ",
+    		  anext->request_type, anext->number, anext->type);
   printf ("]\n");
 }
 
@@ -369,12 +378,13 @@ int remove_alarm(int number){
       val = next->type;
       *last = next->link;
       free(next);
-      test(); // FOR DEBUGGING
       break; // remove the thread the Alarm.
      }
      last = &next->link;
      next = next->link;
   }
+  
+  test(); // FOR DEBUGGING
 
   return val;
 
@@ -405,7 +415,7 @@ void alarm_insert (alarm_t *alarm){
     * has a Message Number of 0.
     * If the alarm is a type C request, it will be inserted along Type A's.
     */
-    if (next->number == alarm->number && alarm->request_type == TYPE_A){ //A.3.2.2
+    if (next->number == alarm->number && alarm->request_type == TYPE_A){//A.3.2.2
 
       // swap the nodes (Replacement)
       alarm->link = next->link;
