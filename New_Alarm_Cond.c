@@ -539,7 +539,7 @@ void *periodic_display_thread(void *arg){
       /*
       * Carry out the necessary operations to print out a message
       */
-      now = time (NULL); //current time since EPOCH
+      now = time (NULL) + 1; //current time since EPOCH
       alarm->time = now + alarm->seconds; // alarm time from "now"
       expired = 0; // has not yet expired.
 
