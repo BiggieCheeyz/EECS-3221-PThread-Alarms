@@ -75,7 +75,7 @@ int insert_flag; //1 if a new alarm has been inserted. set to 0 after processing
 * prints out contents of the thread list as well as the contents of the alarm
 * list for debugging
 */
-void test(){
+void display_lists(){
   thread_t **last, *next;
   alarm_t **alast, *anext;
 
@@ -87,12 +87,12 @@ void test(){
 
   printf ("[Thread List: ");
   for (next = thread_list; next != NULL; next = next->link)
-    printf ("%d <%lu> ", next->type, next->thread_id);
+    printf ("{message type = %d thread_id = <%lu>} ",next->type,next->thread_id);
   printf ("]\n");
 
   printf ("[Alarm List: ");
     for (anext = alarm_list; anext != NULL; anext = anext->link)
-      printf (" {Request Type = %d Alarm # = %d type = %d} ",
+      printf (" {Request Type = %d Alarm # = %d message type = %d} ",
     		  anext->request_type, anext->number, anext->type);
   printf ("]\n");
 }
@@ -174,23 +174,17 @@ void terminate_thread(int type){
     if (next->type == type){
 
       int success = pthread_cancel(next->thread_id); //terminate that thread
-      if(success != 0){ // checks if the thread was successfuly terminated
+      if(success != 0) // checks if the thread was successfuly terminated
         err_abort (success, "thread was not canceled");
 
       *last = next->link;
       free(next);
       break; // remove the thread the Alarm.
-     }
-     last = &next->link;
-     next = next->link;
-    }
 
-  /*
-  * If we reached the end of the list, stop
-  */
-  if (next == NULL)
-    return;
-  }
+    }
+    last = &next->link;
+    next = next->link;
+  }// End while
 
 }
 
@@ -374,20 +368,79 @@ int remove_alarm(int number){
     * if we find the alarm within the list, delete it.
     */
     if (next->number == number){
-
       val = next->type;
       *last = next->link;
       free(next);
       break; // remove the thread the Alarm.
-     }
-     last = &next->link;
-     next = next->link;
-  }
+    }
 
-  test(); // FOR DEBUGGING
+    last = &next->link;
+    next = next->link;
+  }
 
   return val;
 
+}
+
+/*
+* Removes a type B alarm request responsible for type A alarms with the
+* specified type
+*/
+void remove_alarm_B(int type){
+  alarm_t **last, *next;
+  /*
+  * LOCKING PROTOCOL:
+  *
+  * This routine requires that the caller have locked the
+  * alarm_mutex!
+  */
+  last = &alarm_list;
+  next = *last;
+
+  while (next != NULL){
+    /*
+    * if we find the alarm within the list, delete it.
+    */
+    if (next->request_type == TYPE_B && next->type == type){
+      *last = next->link;
+      free(next);
+      break; // remove the thread the Alarm.
+    }
+
+    last = &next->link;
+    next = next->link;
+  }// End while
+}
+
+
+/*
+* Removes a type C alarm request responsible for cancelling alarms with the
+* specified alarm number type
+*/
+void remove_alarm_C(int number){
+  alarm_t **last, *next;
+  /*
+  * LOCKING PROTOCOL:
+  *
+  * This routine requires that the caller have locked the
+  * alarm_mutex!
+  */
+  last = &alarm_list;
+  next = *last;
+
+  while (next != NULL){
+    /*
+    * if we find the alarm within the list, delete it.
+    */
+    if (next->request_type == TYPE_C && next->number == number){
+      *last = next->link;
+      free(next);
+      break; // remove the thread the Alarm.
+    }
+
+    last = &next->link;
+    next = next->link;
+  }// End while
 }
 
 /*
@@ -568,7 +621,7 @@ void *periodic_display_thread(void *arg){
         expired = 1;
       }
       if (expired) { // PRINT MESSAGE // A.3.4.1
-        printf ("%d > ", alarm->seconds);
+        //printf ("%d > ", alarm->seconds);
         //printf ("%s > ", alarm->message);
         printf("Alarm With Message Type (%d) and Message Number"
         " (%d) Displayed at <%d>: <Type A>\n",
@@ -645,9 +698,9 @@ void *alarm_thread (void *arg){
           if (status != 0)
             err_abort (status, "Unlock thread mutex");
 
-          break;
+          //break;
         }
-      }// END TYPE A
+      }// END TYPE A ***************************///////
 
       /*
       * upon finding a new type B alarm, creates a periodic display thread
@@ -690,7 +743,7 @@ void *alarm_thread (void *arg){
           next->type ); // A.3.3.2 (b)
 
         }
-      }// END TYPE B
+      }// END TYPE B ***************************///////
 
       /*
       * upon finding a new type C alarm, removes the alarm of the message
@@ -721,6 +774,7 @@ void *alarm_thread (void *arg){
               err_abort (status, "Lock thread mutex");
 
             terminate_thread(val);
+            remove_alarm_B(val); // remove the alarm from alarm list
 
             status = pthread_mutex_unlock (&thread_mutex);
             if (status != 0)
@@ -729,14 +783,16 @@ void *alarm_thread (void *arg){
             printf("No More Alarm Requests With Message Type (%d):"
             " Periodic Display Thread For Message Type (%d)"
             " Terminated.\n", val, val); // A.3.3.3 (d)
+
+            remove_alarm_C(next->number);// remove alarm from the alarm list
           }
         }
-      }// END TYPE C
+        display_lists(); // debugging
+      }// END TYPE C ***************************///////
 
       next = next->link; //go to the next node
     }
     insert_flag = 0; // finished looping and processd new alarm
-
   }
 }
 
