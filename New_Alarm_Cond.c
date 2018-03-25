@@ -229,7 +229,7 @@ int check_useless_thread(){
 }
 
 /*
-* checks if an alarm's previous type has changed
+* checks if an alarm's type has changed
 *
 * returns 1 if so and 0 otherwise
 */
@@ -784,6 +784,7 @@ int main (int argc, char *argv[]){
       alarm->time = time (NULL) + alarm->seconds;
       alarm->request_type = TYPE_A;
       alarm->is_new = 1;
+      alarm->prev_type = alarm->type;
       /*
       * Insert the new alarm into the list of alarms,
       */
