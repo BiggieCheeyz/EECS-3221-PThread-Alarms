@@ -787,7 +787,7 @@ void *alarm_thread (void *arg){
             remove_alarm_C(next->number);// remove alarm from the alarm list
           }
         }
-        display_lists(); // debugging
+        //display_lists(); // debugging
       }// END TYPE C ***************************///////
 
       next = next->link; //go to the next node
