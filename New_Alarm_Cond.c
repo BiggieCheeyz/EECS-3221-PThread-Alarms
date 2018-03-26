@@ -665,11 +665,12 @@ void *alarm_thread (void *arg){
     * added. Setting current_alarm to 0 informs the insert
     * routine that the thread is not busy.
     */
+
     current_alarm = 0;
-    while (insert_flag == 0) {
+    while (alarm_list == NULL || insert_flag == 0) {
       status = pthread_cond_wait (&alarm_cond, &alarm_mutex);
       if (status != 0)
-      err_abort (status, "Wait on cond");
+        err_abort (status, "Wait on cond");
     }
 
     /*
@@ -776,15 +777,16 @@ void *alarm_thread (void *arg){
             terminate_thread(val);
             remove_alarm_B(val); // remove the alarm from alarm list
 
-            status = pthread_mutex_unlock (&thread_mutex);
-            if (status != 0)
-              err_abort (status, "Unlock thread mutex");
-
             printf("No More Alarm Requests With Message Type (%d):"
             " Periodic Display Thread For Message Type (%d)"
             " Terminated.\n", val, val); // A.3.3.3 (d)
 
             remove_alarm_C(next->number);// remove alarm from the alarm list
+
+
+            status = pthread_mutex_unlock (&thread_mutex);
+            if (status != 0)
+              err_abort (status, "Unlock thread mutex");
           }
         }
         //display_lists(); // debugging
@@ -834,9 +836,11 @@ int main (int argc, char *argv[]){
     &alarm->seconds, &alarm->type, &alarm->number, alarm->message) == 4 &&
     alarm->seconds > 0 && alarm->number > 0 && alarm->type > 0){ // A.3.2.1
 
+      printf("%s\n","Deadlocked if no \"Stuck here!\" message" );/////////////////
       status = pthread_mutex_lock (&alarm_mutex);
       if (status != 0)
         err_abort (status, "Lock mutex");
+      printf("%s\n","Stuck here!" );   /////////////////////////
       alarm->time = time (NULL) + alarm->seconds;
       alarm->request_type = TYPE_A;
       alarm->is_new = 1;
