@@ -214,7 +214,7 @@ int check_dup_2(int num, int req){
 }
 
 /*
-* Removes an alarm of the specified message number from the alarm list
+* Removes a Type A alarm of the specified message number from the alarm list
 *
 * Returns the message type of the alarm that was just removed from alarm list
 *
@@ -245,7 +245,7 @@ int remove_alarm(int number){
     /*
     * if we find the alarm within the list, delete it.
     */
-    if (next->number == number){
+    if (next->number == number && next->request_type == TYPE_A){
       val = next->type;
       *last = next->link;
       free(next);
@@ -589,9 +589,8 @@ void *periodic_display_thread(void *arg){
       * Carry out the necessary operations to print out a message
       */
       now = time(NULL); //current time since EPOCH
-      alarm->time = now + alarm->seconds  + 1; // alarm time from "now"
+      alarm->time = now + alarm->seconds; // alarm time from "now"
 
-      // int sem_flag = 1;
       while(alarm->time > now){ // wait
         now = time(NULL);
 
@@ -733,6 +732,8 @@ void *alarm_thread (void *arg){
 
           val = remove_alarm(next->number); // A.3.3.3 (a)
           if(val != 0){ // A.3.3.3 (c)
+            
+            remove_alarm_C(next->number);// remove alarm from the alarm list
             printf("Type C Alarm Request Processed at <%d>: Alarm Request"
             " With Message Number (%d) Removed\n", (int)(time(NULL)),
             next->number);
@@ -781,10 +782,6 @@ int main (int argc, char *argv[]){
   status = sem_init(&rw_sem, 0, 1); // initialize reader writer Semaphore
   if(status != 0)
     err_abort(status, "Create READ-WRITE Semaphore");
-
-  status = sem_init(&sem, 0, 1); // initialize read_count semaphore
-  if(status != 0)
-    err_abort(status, "Create read_count Semaphore");
 
   /*
   * Create the initial thread responsible for looping through the alarm list
@@ -971,6 +968,5 @@ int main (int argc, char *argv[]){
       fprintf (stderr, "Bad command\n");
       free (alarm);
     }
-
   }// end while
 }
