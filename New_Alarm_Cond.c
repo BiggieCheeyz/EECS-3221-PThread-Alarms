@@ -1,14 +1,17 @@
 /*
-* alarm_cond.c
-*
-* This is an enhancement to the alarm_mutex.c program, which
-* used only a mutex to synchronize access to the shared alarm
-* list. This version adds a condition variable. The alarm
-* thread waits on this condition variable, with a timeout that
-* corresponds to the earliest timer request. If the main thread
-* enters an earlier timeout, it signals the condition variable
-* so that the alarm thread will wake up and process the earlier
-* timeout first, requeueing the later request.
+* New_Alarm_Cond.c
+
+    AUTHORS **
+  Francis Okoyo
+  Tyler Noble
+  Adham El-Shafie
+  Lindan Thillanayagam
+
+
+* This is an enhancement to the alarm_cond.c program, which
+* used only a mutex and condition variables to synchronize acces
+* to a list of alarms. This versions does the job by only using
+* semaphores
 */
 #include <pthread.h>
 #include <time.h>
@@ -55,7 +58,7 @@ typedef struct thread_tag { // NEW STRUCT
 
 } thread_t;
 
-sem_t rw_sem, sem;
+sem_t rw_sem;
 int read_count = 0; // number o readers using the list
 int writing = 0; //flag to notify that there is a writer writing to the list
 int ready = 0; // flag to notify readers that a writer is about to write
@@ -548,27 +551,9 @@ void *periodic_display_thread(void *arg){
 
     pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL); //disable cancellation
 
-    // status = sem_wait (&sem);
-    // if (status != 0)
-      // err_abort (status, "sem wait in periodic display thread");
-    // read_count++;
-    // if (read_count >= 1){
-      // status = sem_wait (&rw_sem);
-      // if (status != 0)
-      //   err_abort (status, "rw_sem wait in periodic display thread");
-    // }
-    // status = sem_post (&sem);
-    // if (status != 0)
-    //   err_abort (status, "sem post in periodic display thread");
-
-    /*
-    * If the alarm list is empty, this thread is useless and should've been
-    * terminated. free the mutex and enable cancellation
-    */
-
     while (alarm_list == NULL){
 
-      //// ACHTUNG! /////
+      ///// ACHTUNG! /////
       pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL); //enable cancellation
       pthread_testcancel();
     }
@@ -610,14 +595,7 @@ void *periodic_display_thread(void *arg){
       while(alarm->time > now){ // wait
         now = time(NULL);
 
-        // if(sem_flag){
-        //   sem_post(&rw_sem); // releas the semaphore so the main can insert
-        //   sem_flag = 0;
-        // }
       } // wait done
-      // if(sem_flag == 0){
-      //   sem_wait(&rw_sem);
-      // }
 
      // PRINT MESSAGE // A.3.4.1
       printf("Alarm With Message Type (%d) and Message Number"
@@ -627,19 +605,7 @@ void *periodic_display_thread(void *arg){
 
     }
     alarm = alarm->link; // go to the next node on the list
-
-    // status = sem_wait (&sem);
-    // if (status != 0)
-    //   err_abort (status, "sem wait in periodic display thread");
     read_count--;
-    // if (read_count == 0){
-      // status = sem_post (&rw_sem); // free read write semaphore
-      // if (status != 0)
-      //   err_abort (status, "rw_sem post in periodic display thread");
-    // }
-    // status = sem_post (&sem);
-    // if (status != 0)
-    //   err_abort (status, "sem post in periodic display thread");
 
     /* used to avoid potential deadlock from thread termination
     */
