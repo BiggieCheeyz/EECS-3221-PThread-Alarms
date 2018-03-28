@@ -56,7 +56,9 @@ typedef struct thread_tag { // NEW STRUCT
 } thread_t;
 
 sem_t rw_sem, sem;
-int read_count = 0;
+int read_count = 0; // number o readers using the list
+int writing = 0; //flag to notify that there is a writer writing to the list
+int ready = 0; // flag to notify readers that a writer is about to write
 
 alarm_t *alarm_list = NULL;
 time_t current_alarm = 0;
@@ -490,6 +492,29 @@ int check_useless_thread(){
 
   return 0;
 }
+
+/*
+* same as above but no thread termination
+*/
+int check_useless_thread_no_term(){
+  thread_t **last, *next;
+
+  last = &thread_list;
+  next = *last;
+
+  /*
+  * loop throught the thread list and check the alarm list for Type A alarms
+  * that have the same message type as the thread. if at least 1 exists, return
+  * 0.
+  */
+  while(next != NULL){
+    if(check_type_a_exists(next->type) == 0){
+      return 1;
+    }
+    next = next->link;
+  }
+  return 0;
+}
 /***************************END HELPER CODE***************************//////////
 
 
@@ -517,20 +542,24 @@ void *periodic_display_thread(void *arg){
 
   while (1){
 
+    while(ready > 0){
+      // wrtiter is ready to trite so don't do anything
+    }
+
     pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL); //disable cancellation
 
-    status = sem_wait (&sem);
-    if (status != 0)
-      err_abort (status, "sem wait in periodic display thread");
-    read_count++;
-    if (read_count >= 1){
-      status = sem_wait (&rw_sem);
-      if (status != 0)
-        err_abort (status, "rw_sem wait in periodic display thread");
-    }
-    status = sem_post (&sem);
-    if (status != 0)
-      err_abort (status, "sem post in periodic display thread");
+    // status = sem_wait (&sem);
+    // if (status != 0)
+      // err_abort (status, "sem wait in periodic display thread");
+    // read_count++;
+    // if (read_count >= 1){
+      // status = sem_wait (&rw_sem);
+      // if (status != 0)
+      //   err_abort (status, "rw_sem wait in periodic display thread");
+    // }
+    // status = sem_post (&sem);
+    // if (status != 0)
+    //   err_abort (status, "sem post in periodic display thread");
 
     /*
     * If the alarm list is empty, this thread is useless and should've been
@@ -543,6 +572,8 @@ void *periodic_display_thread(void *arg){
       pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL); //enable cancellation
       pthread_testcancel();
     }
+
+    read_count++;
     /////
     if (flag == 1){
       alarm = alarm_list; // go back to the beginning
@@ -575,9 +606,18 @@ void *periodic_display_thread(void *arg){
       now = time(NULL); //current time since EPOCH
       alarm->time = now + alarm->seconds  + 1; // alarm time from "now"
 
+      // int sem_flag = 1;
       while(alarm->time > now){ // wait
         now = time(NULL);
-      }
+
+        // if(sem_flag){
+        //   sem_post(&rw_sem); // releas the semaphore so the main can insert
+        //   sem_flag = 0;
+        // }
+      } // wait done
+      // if(sem_flag == 0){
+      //   sem_wait(&rw_sem);
+      // }
 
      // PRINT MESSAGE // A.3.4.1
       printf("Alarm With Message Type (%d) and Message Number"
@@ -588,18 +628,18 @@ void *periodic_display_thread(void *arg){
     }
     alarm = alarm->link; // go to the next node on the list
 
-    status = sem_wait (&sem);
-    if (status != 0)
-      err_abort (status, "sem wait in periodic display thread");
+    // status = sem_wait (&sem);
+    // if (status != 0)
+    //   err_abort (status, "sem wait in periodic display thread");
     read_count--;
-    if (read_count == 0){
-      status = sem_post (&rw_sem); // free read write semaphore
-      if (status != 0)
-        err_abort (status, "rw_sem post in periodic display thread");
-    }
-    status = sem_post (&sem);
-    if (status != 0)
-      err_abort (status, "sem post in periodic display thread");
+    // if (read_count == 0){
+      // status = sem_post (&rw_sem); // free read write semaphore
+      // if (status != 0)
+      //   err_abort (status, "rw_sem post in periodic display thread");
+    // }
+    // status = sem_post (&sem);
+    // if (status != 0)
+    //   err_abort (status, "sem post in periodic display thread");
 
     /* used to avoid potential deadlock from thread termination
     */
@@ -647,10 +687,6 @@ void *alarm_thread (void *arg){
     */
     last = &alarm_list;
     next = *last;
-
-    status = sem_wait (&rw_sem);
-    if (status != 0)
-      err_abort (status, "rw_sem wait in alarm thread");
 
     while(next != NULL){
 
@@ -710,14 +746,26 @@ void *alarm_thread (void *arg){
       * if there are no more alarm requests in the alarm list the same type as
       * the one that was just removed, terminate the periodic display thread
       * responsible for displaying those messages.
+      *
+      * This is the only part of the  alarm thread that writes to the alarm list
       */
       else if(next->request_type == TYPE_C){ //A.3.3.3
         int val;
         if(next->is_new == 1){
-
           next->is_new == 0; // alarm is no longer new
-          val = remove_alarm(next->number); // A.3.3.3 (a)
 
+
+          ready++; // the writer is ready to use the alarm list
+          while(read_count > 0 || writing > 0){
+            // busy waits for readers to be done
+          }
+          status = sem_wait(&rw_sem);
+          if(status != 0)
+            err_abort(status, "rw_sem wait");
+          writing++; // writer has control of the data structure
+
+
+          val = remove_alarm(next->number); // A.3.3.3 (a)
           if(val != 0){ // A.3.3.3 (c)
             printf("Type C Alarm Request Processed at <%d>: Alarm Request"
             " With Message Number (%d) Removed\n", (int)(time(NULL)),
@@ -735,17 +783,18 @@ void *alarm_thread (void *arg){
             " Terminated.\n", val, val); // A.3.3.3 (d)
 
           }
+
+          writing--;
+          status = sem_post(&rw_sem);
+          if(status != 0)
+            err_abort(status, "rw_sem post");
+          ready--;
         }
-        display_lists(); // debugging
         break;
       }// END TYPE C ***************************///////
       next = next->link; //go to the next node
     } // End list loop
     insert_flag = 0; // finished looping and processd new alarm
-
-    status = sem_post (&rw_sem);
-    if (status != 0)
-      err_abort (status, "rw_sem post in alarm thread");
   }
 }
 
@@ -805,9 +854,14 @@ int main (int argc, char *argv[]){
       alarm->is_new = 1;
       alarm->prev_type = alarm->type;
 
+      ready++; // the writer is ready to use the alarm list
+      while(read_count > 0 || writing > 0){
+        // wait for readers or writers to finish
+      }
       status = sem_wait(&rw_sem);
-      if (status != 0)
-        err_abort (status, "rw_sem wait");
+      if(status != 0)
+        err_abort(status, "rw_sem wait");
+      writing++; // writer has control of the data structure
       /*
       * Insert the new alarm into the list of alarms, CRITICAL SECTION
       */
@@ -817,9 +871,11 @@ int main (int argc, char *argv[]){
 
       insert_flag = 1; // a new alarm has been inserted
 
-      status = sem_post (&rw_sem);
-      if (status != 0)
-        err_abort (status, "rw_sem post");
+      writing--;
+      status = sem_post(&rw_sem);
+      if(status != 0)
+        err_abort(status, "rw_sem post");
+      ready--;
 
     }
     /*********************END TYPE A*************************/
@@ -853,9 +909,14 @@ int main (int argc, char *argv[]){
         alarm->request_type = TYPE_B;
         alarm->is_new = 1;
 
+        ready++; //
+        while(read_count > 0 || writing > 0){
+          // busy wait
+        }
         status = sem_wait(&rw_sem);
-        if (status != 0)
-          err_abort (status, "rw_sem wait");
+        if(status != 0)
+          err_abort(status, "rw_sem wait");
+        writing++; // writer has control of the data structure
 
         /*
         * Insert the new alarm into the list of alarms
@@ -866,9 +927,11 @@ int main (int argc, char *argv[]){
         " Inserted Into Alarm List at <%d>!\n", alarm->type, (int)time(NULL));
         insert_flag = 1; // a new alarm has been inserted
 
+        writing--;
         status = sem_post(&rw_sem);
-        if (status != 0)
-          err_abort (status, "rw_sem post");
+        if(status != 0)
+          err_abort(status, "rw_sem post");
+        ready--;
       }
     }
     /*********************END TYPE B*************************/
@@ -903,9 +966,15 @@ int main (int argc, char *argv[]){
         alarm->request_type = TYPE_C;
         alarm->is_new = 1;
 
+
+        ready++;
+        while(read_count > 0 || writing > 0){
+          // busy wait
+        }
         status = sem_wait(&rw_sem);
         if(status != 0)
           err_abort(status, "rw_sem wait");
+        writing++; // writer has control of the data structure
 
         /*
         * Insert the new alarm into the list of alarms.
@@ -917,18 +986,25 @@ int main (int argc, char *argv[]){
 
         insert_flag = 1; // a new alarm has been inserted
 
+        writing--;
         status = sem_post(&rw_sem);
         if(status != 0)
           err_abort(status, "rw_sem post");
+        ready--;
       }
     }
     /*********************END TYPE C*************************/
     else if (sscanf(line,"%d", &status) == 1 && status == 15){ // debugging
+      printf("**DEBUG MODE ENGAGED**\n");
       display_lists();
+      printf("Ready = %d read_count = %d writing = %d\n", ready,
+       read_count, writing );
+      printf("**DEBUG MODE DISENGAGED**\n");
     }
     else{
       fprintf (stderr, "Bad command\n");
       free (alarm);
     }
+
   }// end while
 }
