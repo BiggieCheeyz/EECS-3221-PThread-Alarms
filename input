@@ -1,8 +1,8 @@
-6 MessageType(2, 1) this prints every 4 seconds
+6 MessageType(2, 1) hey there!
 
-5 MessageType(2, 5) Brand new flavor in ya ear!
+4 MessageType(2, 5) Fry it
 
-2 MessageType(3, 22) 2 seconds
+2 MessageType(3, 22) Bruh!
 
 Create_Thread: MessageType(3)
 
@@ -15,3 +15,5 @@ Cancel: Message(22)
 Cancel: Message(1)
 
 Cancel: Message(5)
+
+Cancel: Message(2)
