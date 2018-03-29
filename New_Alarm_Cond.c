@@ -145,7 +145,6 @@ int check_type_a_exists(int type){
 *
 * return 1 if so and 0 otherwise.
 *
-* Requires Mutex for alarm list to prevent writing while readers are reading
 */
 int check_number_a_exists(int num){
   int     status;
@@ -495,29 +494,6 @@ int check_useless_thread(){
 
   return 0;
 }
-
-/*
-* same as above but no thread termination
-*/
-int check_useless_thread_no_term(){
-  thread_t **last, *next;
-
-  last = &thread_list;
-  next = *last;
-
-  /*
-  * loop throught the thread list and check the alarm list for Type A alarms
-  * that have the same message type as the thread. if at least 1 exists, return
-  * 0.
-  */
-  while(next != NULL){
-    if(check_type_a_exists(next->type) == 0){
-      return 1;
-    }
-    next = next->link;
-  }
-  return 0;
-}
 /***************************END HELPER CODE***************************//////////
 
 
@@ -732,7 +708,7 @@ void *alarm_thread (void *arg){
 
           val = remove_alarm(next->number); // A.3.3.3 (a)
           if(val != 0){ // A.3.3.3 (c)
-            
+
             remove_alarm_C(next->number);// remove alarm from the alarm list
             printf("Type C Alarm Request Processed at <%d>: Alarm Request"
             " With Message Number (%d) Removed\n", (int)(time(NULL)),
