@@ -1,0 +1,130 @@
+** The following tests were done by Francis Okoyo franciso 213811336 **
+Test1 :
+
+alarm> Diagram
+
+FBad command
+ialarm> galarm> ure 1: Overall system design.
+Bad command
+alarm> 3 MessageType(2, 1) Wie geht es dir?
+Type A Alarm Request With Message Number <1> Received at time <1522429831>: <Type A>
+alarm> 4 MessageType(2, 5) Es geht mir gut!
+Type A Alarm Request With Message Number <5> Received at time <1522429836>: <Type A>
+alarm> 2 MessageType(3, 22) Bruh!
+Type A Alarm Request With Message Number <22> Received at time <1522429840>: <Type A>
+alarm> Create_Thread: MessageType(3)
+Type B Create Thread Alarm Request With Message Type (3) Inserted Into Alarm List at <1522429846>!
+alarm> Type B Alarm Request Processed at <1522429846>: New Periodic Display Thread With Message Type (3) Created.
+Alarm With Message Type (3) and Message Number (22) Displayed at <1522429848>: <Type A> :"Bruh!"
+Alarm With Message Type (3) and Message Number (22) Displayed at <1522429850>: <Type A> :"Bruh!"
+Create_Thread: MessageType(1)
+Type B Alarm Request Error: No Alarm Request With Message Type(1)!
+alarm> Alarm With Message Type (3) and Message Number (22) Displayed at <1522429852>: <Type A> :"Bruh!"
+Alarm With Message Type (3) and Message Number (22) Displayed at <1522429854>: <Type A> :"Bruh!"
+Alarm With Message Type (3) and Message Number (22) Displayed at <1522429856>: <Type A> :"Bruh!"
+Create_Thread: MessageType(2)
+Alarm With Message Type (3) and Message Number (22) Displayed at <1522429858>: <Type A> :"Bruh!"
+Type B Create Thread Alarm Request With Message Type (2) Inserted Into Alarm List at <1522429858>!
+alarm> Type B Alarm Request Processed at <1522429858>: New Periodic Display Thread With Message Type (2) Created.
+Alarm With Message Type (3) and Message Number (22) Displayed at <1522429860>: <Type A> :"Bruh!"
+Alarm With Message Type (2) and Message Number (1) Displayed at <1522429861>: <Type A> :"Wie geht es dir?"
+Alarm With Message Type (3) and Message Number (22) Displayed at <1522429862>: <Type A> :"Bruh!"
+Alarm With Message Type (3) and Message Number (22) Displayed at <1522429864>: <Type A> :"Bruh!"
+Alarm With Message Type (2) and Message Number (5) Displayed at <1522429865>: <Type A> :"Es geht mir gut!"
+Alarm With Message Type (3) and Message Number (22) Displayed at <1522429866>: <Type A> :"Bruh!"
+Alarm With Message Type (2) and Message Number (1) Displayed at <1522429868>: <Type A> :"Wie geht es dir?"
+Alarm With Message Type (3) and Message Number (22) Displayed at <1522429868>: <Type A> :"Bruh!"
+Alarm With Message Type (3) and Message Number (22) Displayed at <1522429870>: <Type A> :"Bruh!"
+Alarm With Message Type (2) and Message Number (5) Displayed at <1522429872>: <Type A> :"Es geht mir gut!"
+Alarm With Message Type (3) and Message Number (22) Displayed at <1522429872>: <Type A> :"Bruh!"
+Alarm With Message Type (3) and Message Number (22) Displayed at <1522429874>: <Type A> :"Bruh!"
+Alarm With Message Type (2) and Message Number (1) Displayed at <1522429875>: <Type A> :"Wie geht es dir?"
+Cancel: Message(22)
+Alarm With Message Type (3) and Message Number (22) Displayed at <1522429876>: <Type A> :"Bruh!"
+Alarm With Message Type (2) and Message Number (5) Displayed at <1522429879>: <Type A> :"Es geht mir gut!"
+Type C Cancel Alarm Request With Message Number (22) Inserted Into Alarm List at <1522429879>: <Type C>
+alarm> Type C Alarm Request Processed at <1522429879>: Alarm Request With Message Number (22) Removed
+No More Alarm Requests With Message Type (3): Periodic Display Thread For Message Type (3) Terminated.
+Alarm With Message Type (2) and Message Number (1) Displayed at <1522429882>: <Type A> :"Wie geht es dir?"
+Alarm With Message Type (2) and Message Number (5) Displayed at <1522429886>: <Type A> :"Es geht mir gut!"
+Alarm With Message Type (2) and Message Number (1) Displayed at <1522429889>: <Type A> :"Wie geht es dir?"
+Cancel: Message(1)
+Alarm With Message Type (2) and Message Number (5) Displayed at <1522429893>: <Type A> :"Es geht mir gut!"
+Type C Cancel Alarm Request With Message Number (1) Inserted Into Alarm List at <1522429893>: <Type C>
+alarm> Alarm With Message Type (2) and Message Number (1) Displayed at <1522429896>: <Type A> :"Wie geht es dir?"
+Type C Alarm Request Processed at <1522429896>: Alarm Request With Message Number (1) Removed
+Alarm With Message Type (2) and Message Number (5) Displayed at <1522429900>: <Type A> :"Es geht mir gut!"
+Alarm With Message Type (2) and Message Number (5) Displayed at <1522429904>: <Type A> :"Es geht mir gut!"
+Cancel: Message(5)
+Alarm With Message Type (2) and Message Number (5) Displayed at <1522429908>: <Type A> :"Es geht mir gut!"
+Type C Cancel Alarm Request With Message Number (5) Inserted Into Alarm List at <1522429908>: <Type C>
+alarm> 1Alarm With Message Type (2) and Message Number (5) Displayed at <1522429912>: <Type A> :"Es geht mir gut!"
+Type C Alarm Request Processed at <1522429912>: Alarm Request With Message Number (5) Removed
+No More Alarm Requests With Message Type (2): Periodic Display Thread For Message Type (2) Terminated.
+51
+Bad command
+alarm> 15
+**DEBUG MODE ENGAGED**
+[Thread List: ]
+[Alarm List: ]
+Ready = 0 read_count = 0 writing = 0
+**DEBUG MODE DISENGAGED**
+alarm> franciso@WORK-STATION:/mnt/c/Users/francis/Desktop/EECS 3221/assign3/EECS3221Assignment3$
+
+
+Test2 :
+
+franciso@WORK-STATION:/mnt/c/Users/francis/Desktop/EECS 3221/assign3/EECS3221Assignment3$ ./a.out
+alarm> 3 MessageType(2, 1) Wie geht es dir?
+Type A Alarm Request With Message Number <1> Received at time <1522430168>: <Type A>
+alarm> 15
+**DEBUG MODE ENGAGED**
+[Thread List: ]
+[Alarm List:  {Request Type = 1 Alarm # = 1 message type = 2} ]
+Ready = 0 read_count = 0 writing = 0
+**DEBUG MODE DISENGAGED**
+alarm> 4 MessageType(2, 5) Es geht mir gut!
+Type A Alarm Request With Message Number <5> Received at time <1522430177>: <Type A>
+alarm> 15
+**DEBUG MODE ENGAGED**
+[Thread List: ]
+[Alarm List:  {Request Type = 1 Alarm # = 1 message type = 2}  {Request Type = 1 Alarm # = 5 message type = 2} ]
+Ready = 0 read_count = 0 writing = 0
+**DEBUG MODE DISENGAGED**
+alarm> Create_Thread: MessageType(2)
+Type B Create Thread Alarm Request With Message Type (2) Inserted Into Alarm List at <1522430188>!
+alarm> Type B Alarm Request Processed at <1522430188>: New Periodic Display Thread With Message Type (2) Created.
+15
+**DEBUG MODE ENGAGED**
+[Thread List: {message type = 2 thread_id = <140240494724864>} ]
+[Alarm List:  {Request Type = 2 Alarm # = 0 message type = 2}  {Request Type = 1 Alarm # = 1 message type = 2}  {Request Type = 1 Alarm # = 5 message type = 2} ]
+Ready = 0 read_count = 1 writing = 0
+**DEBUG MODE DISENGAGED**
+alarm> Alarm With Message Type (2) and Message Number (1) Displayed at <1522430191>: <Type A> :"Wie geht es dir?"
+Alarm With Message Type (2) and Message Number (5) Displayed at <1522430195>: <Type A> :"Es geht mir gut!"
+Alarm With Message Type (2) and Message Number (1) Displayed at <1522430198>: <Type A> :"Wie geht es dir?"
+Cancel: Message(1)
+Alarm With Message Type (2) and Message Number (5) Displayed at <1522430202>: <Type A> :"Es geht mir gut!"
+Type C Cancel Alarm Request With Message Number (1) Inserted Into Alarm List at <1522430202>: <Type C>
+alarm> Alarm With Message Type (2) and Message Number (1) Displayed at <1522430205>: <Type A> :"Wie geht es dir?"
+Type C Alarm Request Processed at <1522430205>: Alarm Request With Message Number (1) Removed
+15
+**DEBUG MODE ENGAGED**
+[Thread List: {message type = 2 thread_id = <140240494724864>} ]
+[Alarm List:  {Request Type = 2 Alarm # = 0 message type = 2}  {Request Type = 1 Alarm # = 5 message type = 2} ]
+Ready = 0 read_count = 1 writing = 0
+**DEBUG MODE DISENGAGED**
+alarm> Alarm With Message Type (2) and Message Number (5) Displayed at <1522430209>: <Type A> :"Es geht mir gut!"
+Alarm With Message Type (2) and Message Number (5) Displayed at <1522430213>: <Type A> :"Es geht mir gut!"
+Cancel: Message(5)
+Alarm With Message Type (2) and Message Number (5) Displayed at <1522430217>: <Type A> :"Es geht mir gut!"
+Type C Cancel Alarm Request With Message Number (5) Inserted Into Alarm List at <1522430217>: <Type C>
+alarm> Type C Alarm Request Processed at <1522430217>: Alarm Request With Message Number (5) Removed
+No More Alarm Requests With Message Type (2): Periodic Display Thread For Message Type (2) Terminated.
+15
+**DEBUG MODE ENGAGED**
+[Thread List: ]
+[Alarm List: ]
+Ready = 0 read_count = 0 writing = 0
+**DEBUG MODE DISENGAGED**
+**////////////////////////////////////////////////////////////////////////////**
