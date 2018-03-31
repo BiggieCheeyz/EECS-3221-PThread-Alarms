@@ -436,10 +436,10 @@ void insert_thread(thread_t *thread){
 */
 void terminate_thread(int type){
   thread_t **last, *next;
-
   last = &thread_list;
   next = *last;
 
+  remove_alarm_B(type); // remove the alarm from alarm list
   while (next != NULL){
 
     /*
@@ -459,7 +459,6 @@ void terminate_thread(int type){
     last = &next->link;
     next = next->link;
   }// End while
-
 }
 
 /*
@@ -718,7 +717,7 @@ void *alarm_thread (void *arg){
           if(check_type_a_exists(val) == 0){ // A.3.3.3 (b)
 
             terminate_thread(val);
-            remove_alarm_B(val); // remove the alarm from alarm list
+            // remove_alarm_B(val); // remove the alarm from alarm list
             remove_alarm_C(next->number);// remove alarm from the alarm list
 
             printf("No More Alarm Requests With Message Type (%d):"
