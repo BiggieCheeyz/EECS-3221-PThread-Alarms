@@ -784,7 +784,7 @@ int main (int argc, char *argv[]){
     *
     */
     /*************************TYPE A*************************/
-    if (sscanf (line, "%d MessageType(%d, %d) %128[^\n]",
+    if (sscanf (line, "%d Message(%d, %d) %128[^\n]",
     &alarm->seconds, &alarm->type, &alarm->number, alarm->message) == 4 &&
     alarm->seconds > 0 && alarm->number > 0 && alarm->type > 0){ // A.3.2.1
 
