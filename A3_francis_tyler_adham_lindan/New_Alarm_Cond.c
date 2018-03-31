@@ -574,7 +574,7 @@ void *periodic_display_thread(void *arg){
 
      // PRINT MESSAGE // A.3.4.1
       printf("Alarm With Message Type (%d) and Message Number"
-      " (%d) Displayed at <%d>: <Type A> :",
+      " (%d) Displayed at <%d>: <Type A> : ",
       alarm->type, alarm->number, (int)time(NULL) );
       printf ("\"%s\"\n", alarm->message);
 
