@@ -73,6 +73,8 @@ const int TYPE_C = 3;
 
 int insert_flag; //1 if a new alarm has been inserted. set to 0 after processing
 
+int debug_flag;
+
 /***************************HELPER CODE***************************//////////////
 /*
 * prints out contents of the thread list as well as the contents of the alarm
@@ -88,7 +90,7 @@ void display_lists(){
   alast = &alarm_list;
   anext = *alast;
 
-  printf ("[Thread List: ");
+  printf ("\n[Thread List: ");
   for (next = thread_list; next != NULL; next = next->link)
     printf ("{message type = %d thread_id = <%lu>} ",next->type,next->thread_id);
   printf ("]\n");
@@ -505,6 +507,21 @@ void delay(int sec){
   while(till > now)
     now = time(NULL);
 }
+
+/*
+* When debug mode is activated, prints out the contents of the alarm list as
+* well as the thread list. Also prints out the values for the semaphore
+* variables (during the time debud is called) used for mutual exclusion.
+*
+*/
+void debug(){
+
+  if (debug_flag){
+    display_lists();
+    printf("Ready = %d read_count = %d writing = %d\n\n", ready, read_count, writing );
+  }
+
+}
 /***************************END HELPER CODE***************************//////////
 
 
@@ -658,6 +675,7 @@ void *alarm_thread (void *arg){
             /* critical section */
 
             remove_alarm_B(next->prev_type); // remove it from the list
+            debug();
 
             writing--;
             status = sem_post(&rw_sem);
@@ -665,6 +683,8 @@ void *alarm_thread (void *arg){
               err_abort(status, "rw_sem post");
             ready--;
             ////////////////
+          }else{
+            debug();
           }
           break;
         }
@@ -701,7 +721,7 @@ void *alarm_thread (void *arg){
           printf("Type B Alarm Request Processed at <%d>: New Periodic Dis"
           "play Thread With Message Type (%d) Created.\n", (int)(time(NULL)),
           next->type ); // A.3.3.2 (b)
-
+          debug();
           break;
         }
       }// END TYPE B ***************************///////
@@ -751,7 +771,7 @@ void *alarm_thread (void *arg){
             " Periodic Display Thread For Message Type (%d)"
             " Terminated.\n", val, val); // A.3.3.3 (d)
 
-          }
+          }debug();
 
           writing--;
           status = sem_post(&rw_sem);
@@ -960,11 +980,14 @@ int main (int argc, char *argv[]){
     }
     /*********************END TYPE C*************************/
     else if (sscanf(line,"%d", &status) == 1 && status == 15){ // debugging
-      printf("**DEBUG MODE ENGAGED**\n");
-      display_lists();
-      printf("Ready = %d read_count = %d writing = %d\n", ready,
-       read_count, writing );
-      printf("**DEBUG MODE DISENGAGED**\n");
+      if (debug_flag == 0){
+        printf("**DEBUG MODE ENGAGED**\n");
+        debug_flag = 1;
+      }else{
+        printf("**DEBUG MODE DISENGAGED**\n");
+        debug_flag = 0;
+      }
+
     }
     else{
       fprintf (stderr, "Bad command\n");
