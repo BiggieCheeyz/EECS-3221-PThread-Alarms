@@ -439,7 +439,6 @@ void terminate_thread(int type){
   last = &thread_list;
   next = *last;
 
-  remove_alarm_B(type); // remove the alarm from alarm list
   while (next != NULL){
 
     /*
@@ -493,6 +492,19 @@ int check_useless_thread(){
 
   return 0;
 }
+
+/*
+*
+* used to delay a mesage 'sec' seconds before printing
+*
+*/
+void delay(int sec){
+  int now = time(NULL);
+  int till = now + sec;
+
+  while(till > now)
+    now = time(NULL);
+}
 /***************************END HELPER CODE***************************//////////
 
 
@@ -506,12 +518,14 @@ int check_useless_thread(){
 */
 void *periodic_display_thread(void *arg){
   alarm_t *alarm = alarm_list;
-  struct timespec cond_time;
-  time_t now;
-  int status, expired, flag;
+  int status, flag;
 
   int *arg_pointer = arg;
   int type = *arg_pointer; // parameter passed by the create thread call
+
+  //data
+  char r_message[128]; int r_type, r_sec, r_num, r_req_type;
+  /////
 
   /*
   * Loop forever, processing Type A alarms of specified message type.
@@ -525,15 +539,12 @@ void *periodic_display_thread(void *arg){
     }
 
     pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL); //disable cancellation
-
     while (alarm_list == NULL){
-
       ///// ACHTUNG! /////
       pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL); //enable cancellation
       pthread_testcancel();
     }
 
-    read_count++;
     /////
     if (flag == 1){
       alarm = alarm_list; // go back to the beginning
@@ -544,7 +555,15 @@ void *periodic_display_thread(void *arg){
     }
     /////
 
-    if(alarm->type != type && alarm->request_type == TYPE_A){ //A.3.4.2
+    read_count++;
+    /* read all the importnat data */
+    r_type = alarm->type;
+    r_num = alarm->number;
+    r_sec = alarm->seconds;
+    r_req_type = alarm->request_type;
+    strcpy(r_message, alarm->message);
+    /////////////////////////////////
+    if(r_type != type && r_req_type == TYPE_A){ //A.3.4.2
       /*
       * check if its type has changed. if its type has changed from a different
       * one, notify the user that an alarm with the specified type which
@@ -553,30 +572,10 @@ void *periodic_display_thread(void *arg){
       if(check_prev(alarm) == 1 && alarm->prev_type == type){
         if(alarm->expo == 0){ // check if alarm change has been acknowledged
           printf("Alarm With Message Type (%d) Replaced at <%d>: "
-          "<Type A>\n", alarm->type, (int)alarm->time ); // A.3.4.2
+          "<Type A>\n", r_type, (int)time(NULL)); // A.3.4.2
           alarm->expo = 1; // alarm exposed (chanhe acknowledged)
         }
       }
-    }
-    else if(alarm->type == type && alarm->request_type == TYPE_A){ //A.3.4.1
-
-      /*
-      * Carry out the necessary operations to print out a message
-      */
-      now = time(NULL); //current time since EPOCH
-      alarm->time = now + alarm->seconds; // alarm time from "now"
-
-      while(alarm->time > now){ // wait
-        now = time(NULL);
-
-      } // wait done
-
-     // PRINT MESSAGE // A.3.4.1
-      printf("Alarm With Message Type (%d) and Message Number"
-      " (%d) Displayed at <%d>: <Type A> : ",
-      alarm->type, alarm->number, (int)time(NULL) );
-      printf ("\"%s\"\n", alarm->message);
-
     }
     alarm = alarm->link; // go to the next node on the list
     read_count--;
@@ -585,6 +584,15 @@ void *periodic_display_thread(void *arg){
     */
     pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL); //enable cancellation
     pthread_testcancel(); // set a cancellation point
+
+    if(r_type == type && r_req_type == TYPE_A){ //A.3.4.1
+      delay(r_sec);
+      // PRINT MESSAGE // A.3.4.1
+      printf("Alarm With Message Type (%d) and Message Number"
+      " (%d) Displayed at <%d>: <Type A> : ",
+      r_type, r_num, (int)time(NULL) );
+      printf ("\"%s\"\n", r_message);
+    }
   }// End While(1)
 }
 
@@ -601,9 +609,7 @@ void *periodic_display_thread(void *arg){
 void *alarm_thread (void *arg){
 
   alarm_t **last, *next;
-  struct timespec cond_time;
-  time_t now;
-  int status, expired;
+  int status;
 
   /*
   * Loop forever, processing commands. The alarm thread will
@@ -638,7 +644,28 @@ void *alarm_thread (void *arg){
         if(next->is_new == 1){
           next->is_new = 0; // alarm is no longer new
 
-          status = check_useless_thread();
+          status = check_useless_thread(); // remove possible useless threads
+          if (status == 1){ // then remove it from the alarm list
+            ////////////////
+            ready++; // the writer is ready to use the alarm list
+            while(read_count > 0 || writing > 0){
+              // busy waits for readers to be done
+            }
+            status = sem_wait(&rw_sem);
+            if(status != 0)
+              err_abort(status, "rw_sem wait");
+            writing++; // writer has control of the data structure
+            /* critical section */
+
+            remove_alarm_B(next->prev_type); // remove it from the list
+
+            writing--;
+            status = sem_post(&rw_sem);
+            if(status != 0)
+              err_abort(status, "rw_sem post");
+            ready--;
+            ////////////////
+          }
           break;
         }
       }// END TYPE A ***************************///////
@@ -716,8 +743,8 @@ void *alarm_thread (void *arg){
 
           if(check_type_a_exists(val) == 0){ // A.3.3.3 (b)
 
-            terminate_thread(val);
-            // remove_alarm_B(val); // remove the alarm from alarm list
+            terminate_thread(val); // terminate the thread
+            remove_alarm_B(val); // remove the B alarm from alarm list
             remove_alarm_C(next->number);// remove alarm from the alarm list
 
             printf("No More Alarm Requests With Message Type (%d):"

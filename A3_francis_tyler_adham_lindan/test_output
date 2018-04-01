@@ -128,3 +128,67 @@ No More Alarm Requests With Message Type (2): Periodic Display Thread For Messag
 Ready = 0 read_count = 0 writing = 0
 **DEBUG MODE DISENGAGED**
 **////////////////////////////////////////////////////////////////////////////**
+
+
+/* testing for a fault (this series of inputs previously caused a segmentation fault) */
+franciso@WORK-STATION:/mnt/c/Users/francis/Desktop/EECS 3221/assign3/EECS3221Assignment3/A3_francis_tyler_adham_lindan$ ./a.out
+alarm>
+alarm>
+alarm>
+alarm>
+alarm>
+alarm>
+alarm>
+alarm>
+alarm>
+alarm>
+alarm>
+alarm> 14 Message(3,1) test 1 fault
+Type A Alarm Request With Message Number <1> Received at time <1522568891>: <Type A>
+alarm> 16 Message(2,2) test 2 fault
+Type A Alarm Request With Message Number <2> Received at time <1522568895>: <Type A>
+alarm> Create_Thread: MessageType(3)
+Type B Create Thread Alarm Request With Message Type (3) Inserted Into Alarm List at <1522568898>!
+alarm> Type B Alarm Request Processed at <1522568898>: New Periodic Display Thread With Message Type (3) Created.
+Create_Thread: MessageType(2)
+Type B Create Thread Alarm Request With Message Type (2) Inserted Into Alarm List at <1522568902>!
+alarm> Type B Alarm Request Processed at <1522568902>: New Periodic Display Thread With Message Type (2) Created.
+16 Message(3,2) test 2 fault replace
+Type A Replacement Alarm Request With Message Number (2) Received at <1522568907>: <A>
+Type A Alarm Request With Message Number <2> Received at time <1522568907>: <Type A>
+alarm> Alarm With Message Type (3) and Message Number (1) Displayed at <1522568912>: <Type A> : "test 1 fault"
+Alarm With Message Type (2) and Message Number (2) Displayed at <1522568918>: <Type A> : "test 2 fault"
+Alarm With Message Type (3) and Message Number (1) Displayed at <1522568926>: <Type A> : "test 1 fault"
+15
+**DEBUG MODE ENGAGED**
+[Thread List: {message type = 3 thread_id = <139933322774272>} ]
+[Alarm List:  {Request Type = 2 Alarm # = 0 message type = 3}  {Request Type = 1 Alarm # = 1 message type = 3}  {Request Type = 1 Alarm # = 2 message type = 3} ]
+Ready = 0 read_count = 0 writing = 0
+**DEBUG MODE DISENGAGED**
+alarm> Alarm With Message Type (3) and Message Number (2) Displayed at <1522568942>: <Type A> : "test 2 fault replace"
+Cancel: Message(2)
+Type C Cancel Alarm Request With Message Number (2) Inserted Into Alarm List at <1522568952>: <Type C>
+alarm> Type C Alarm Request Processed at <1522568952>: Alarm Request With Message Number (2) Removed
+Alarm With Message Type (3) and Message Number (1) Displayed at <1522568956>: <Type A> : "test 1 fault"
+        Cancel: Message(1)
+Bad command
+alarm> sdcsd
+Bad command
+alarm>  Cancel: Message(1)
+Bad command
+alarm> Alarm With Message Type (3) and Message Number (2) Displayed at <1522568972>: <Type A> : "test 2 fault replace"
+Cancel: Message(1)
+Type C Cancel Alarm Request With Message Number (1) Inserted Into Alarm List at <1522568982>: <Type C>
+alarm> Type C Alarm Request Processed at <1522568982>: Alarm Request With Message Number (1) Removed
+No More Alarm Requests With Message Type (3): Periodic Display Thread For Message Type (3) Terminated.
+Cancel: Message(1)
+Alarm With Message Type (3) and Message Number (1) Displayed at <1522568986>: <Type A> : "test 1 fault"
+Error: No Alarm Request With Message Number (1) to Cancel!
+alarm> 15
+**DEBUG MODE ENGAGED**
+[Thread List: ]
+[Alarm List: ]
+Ready = 0 read_count = 0 writing = 0
+**DEBUG MODE DISENGAGED**
+alarm> clear
+Bad command

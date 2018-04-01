@@ -9,3 +9,5 @@ Create_Thread: MessageType(3)
 5 Message(3,4) test 1 changed
 
 Cancel: Message(5)
+
+Cancel: Message(4)
