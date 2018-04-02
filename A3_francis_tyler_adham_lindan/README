@@ -29,8 +29,8 @@ EXTRA INFORMATION:
 
 1) A feature has been implemented to allow the user see the contents of the
    data structures used in this program. At the prompt "Alarm>", the users can
-   input '15' which will activate debug mode and print out the contents of the
-   lists as well as the values for some of the semaphores. debug mode can be 
+   input 'debug' which will activate debug mode and print out the contents of the
+   lists as well as the values for some of the semaphores. debug mode can be
    toggled on and off by inputting the debug command. When debug mode is
    activated, it prints out the contents of the contents of the lists and
    semaphores every time a new alarm is processed (inserted).

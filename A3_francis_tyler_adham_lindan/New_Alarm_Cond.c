@@ -2,10 +2,10 @@
 * New_Alarm_Cond.c
 
     AUTHORS **
-  Francis Okoyo 213811336
-  Tyler Noble 212270369
-  Adham El-Shafie 212951018
-  Lindan Thillanayagam 213742176
+  Francis Okoyo 			213811336
+  Tyler Noble 				212270369
+  Adham El-Shafie 			212951018
+  Lindan Thillanayagam 		213742176
 
 
 * This is an enhancement to the alarm_cond.c program, which
@@ -797,6 +797,7 @@ void *alarm_thread (void *arg){
 int main (int argc, char *argv[]){
   int status;
   char line[128];
+  char deb[8];
   alarm_t *alarm;
   thread_t *thrd;
   pthread_t thread;
@@ -979,7 +980,7 @@ int main (int argc, char *argv[]){
       }
     }
     /*********************END TYPE C*************************/
-    else if (sscanf(line,"%d", &status) == 1 && status == 15){ // debugging
+    else if (sscanf(line,"%s", deb) && strcmp("debug",deb) == 0){ // debugging
       if (debug_flag == 0){
         printf("**DEBUG MODE ENGAGED**\n");
         debug_flag = 1;
