@@ -38,6 +38,7 @@ typedef struct alarm_tag {
   int               number; /* Message Number */
   int               request_type; // TypeA == 1 TypeB == 2 TypeC == 3
   int               expo; // signifies that the type change was confirmed
+  int               first;
   /*******************end new additions***************/
 } alarm_t;
 
@@ -58,7 +59,7 @@ typedef struct thread_tag { // NEW STRUCT
 
 } thread_t;
 
-sem_t rw_sem;
+sem_t rw_sem, sem_mutex;
 int read_count = 0; // number o readers using the list
 int writing = 0; //flag to notify that there is a writer writing to the list
 int ready = 0; // flag to notify readers that a writer is about to write
@@ -496,29 +497,17 @@ int check_useless_thread(){
 }
 
 /*
-*
-* used to delay a mesage 'sec' seconds before printing
-*
-*/
-void delay(int sec){
-  int now = time(NULL);
-  int till = now + sec;
-
-  while(till > now)
-    now = time(NULL);
-}
-
-/*
 * When debug mode is activated, prints out the contents of the alarm list as
 * well as the thread list. Also prints out the values for the semaphore
-* variables (during the time debud is called) used for mutual exclusion.
+* variables (during the time debug is called) used for mutual exclusion.
 *
 */
 void debug(){
 
   if (debug_flag){
     display_lists();
-    printf("Ready = %d read_count = %d writing = %d\n\n", ready, read_count, writing );
+    printf("Ready = %d read_count = %d writing = %d\n\n", ready,
+    read_count, writing );
   }
 
 }
@@ -539,10 +528,6 @@ void *periodic_display_thread(void *arg){
 
   int *arg_pointer = arg;
   int type = *arg_pointer; // parameter passed by the create thread call
-
-  //data
-  char r_message[128]; int r_type, r_sec, r_num, r_req_type;
-  /////
 
   /*
   * Loop forever, processing Type A alarms of specified message type.
@@ -571,16 +556,11 @@ void *periodic_display_thread(void *arg){
       flag = 1; // go back to the beginning of the list
     }
     /////
-
+    sem_wait(&sem_mutex);
     read_count++;
-    /* read all the importnat data */
-    r_type = alarm->type;
-    r_num = alarm->number;
-    r_sec = alarm->seconds;
-    r_req_type = alarm->request_type;
-    strcpy(r_message, alarm->message);
-    /////////////////////////////////
-    if(r_type != type && r_req_type == TYPE_A){ //A.3.4.2
+    sem_post(&sem_mutex);
+
+    if(alarm->type != type && alarm->request_type == TYPE_A){ //A.3.4.2
       /*
       * check if its type has changed. if its type has changed from a different
       * one, notify the user that an alarm with the specified type which
@@ -589,27 +569,36 @@ void *periodic_display_thread(void *arg){
       if(check_prev(alarm) == 1 && alarm->prev_type == type){
         if(alarm->expo == 0){ // check if alarm change has been acknowledged
           printf("Alarm With Message Type (%d) Replaced at <%d>: "
-          "<Type A>\n", r_type, (int)time(NULL)); // A.3.4.2
-          alarm->expo = 1; // alarm exposed (chanhe acknowledged)
+          "<Type A>\n", alarm->type, (int)time(NULL)); // A.3.4.2
+          alarm->expo = 1; // alarm exposed (change acknowledged)
         }
       }
     }
-    alarm = alarm->link; // go to the next node on the list
+
+
+  	if (alarm->type == type && alarm->request_type == TYPE_A && alarm->first == 1){
+  		alarm->time = time (NULL) + alarm->seconds;
+      alarm->first = 0;
+  	}
+
+    if(alarm->type == type && alarm->request_type == TYPE_A && time(NULL) >= alarm->time){ //A.3.4.1
+      // PRINT MESSAGE // A.3.4.1
+      printf("Alarm With Message Type (%d) and Message Number"
+      " (%d) Displayed at <%d>: <Type A> : ",
+      alarm->type, alarm->number, (int)time(NULL) );
+      printf ("\"%s\"\n", alarm->message);
+      alarm->time = time (NULL) + alarm->seconds;
+    }
+	  alarm = alarm->link; // go to the next node on the list
+
+    sem_wait(&sem_mutex);
     read_count--;
+    sem_post(&sem_mutex);
 
     /* used to avoid potential deadlock from thread termination
     */
     pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL); //enable cancellation
     pthread_testcancel(); // set a cancellation point
-
-    if(r_type == type && r_req_type == TYPE_A){ //A.3.4.1
-      delay(r_sec);
-      // PRINT MESSAGE // A.3.4.1
-      printf("Alarm With Message Type (%d) and Message Number"
-      " (%d) Displayed at <%d>: <Type A> : ",
-      r_type, r_num, (int)time(NULL) );
-      printf ("\"%s\"\n", r_message);
-    }
   }// End While(1)
 }
 
@@ -676,7 +665,6 @@ void *alarm_thread (void *arg){
 
             remove_alarm_B(next->prev_type); // remove it from the list
             debug();
-
             writing--;
             status = sem_post(&rw_sem);
             if(status != 0)
@@ -806,6 +794,10 @@ int main (int argc, char *argv[]){
   if(status != 0)
     err_abort(status, "Create READ-WRITE Semaphore");
 
+  status = sem_init(&sem_mutex, 0, 1); // initialize reader writer Semaphore
+  if(status != 0)
+    err_abort(status, "Create Mutex Semaphore");
+
   /*
   * Create the initial thread responsible for looping through the alarm list
   * and performing operations depening on the request type
@@ -839,6 +831,7 @@ int main (int argc, char *argv[]){
       alarm->request_type = TYPE_A;
       alarm->is_new = 1;
       alarm->prev_type = alarm->type;
+      alarm->first = 1;
 
       ready++; // the writer is ready to use the alarm list
       while(read_count > 0 || writing > 0){

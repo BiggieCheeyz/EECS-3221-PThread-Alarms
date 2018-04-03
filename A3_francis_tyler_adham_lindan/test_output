@@ -192,3 +192,387 @@ Ready = 0 read_count = 0 writing = 0
 **DEBUG MODE DISENGAGED**
 alarm> clear
 Bad command
+
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+
+franciso@WORK-STATION:/mnt/c/Users/francis/Desktop$ clear
+franciso@WORK-STATION:/mnt/c/Users/francis/Desktop$ make
+make: *** No targets specified and no makefile found.  Stop.
+franciso@WORK-STATION:/mnt/c/Users/francis/Desktop$ cc New_Alarm_Cond.c -D_POSIX_PTHREAD_SEMANTICS -lpthread
+franciso@WORK-STATION:/mnt/c/Users/francis/Desktop$ ./a.out
+alarm> 5 Message(4,4) test
+
+10Type A Alarm Request With Message Number <4> Received at time <1522777234>: <Type A>
+ alarm> alarm> Message(4,5) test 2
+Type A Alarm Request With Message Number <5> Received at time <1522777236>: <Type A>
+alarm> debug
+**DEBUG MODE ENGAGED**
+alarm> Create_Thread: MessageType(4)
+Type B Create Thread Alarm Request With Message Type (4) Inserted Into Alarm List at <1522777251>!
+alarm> Type B Alarm Request Processed at <1522777251>: New Periodic Display Thread With Message Type (4) Created.
+
+[Thread List: {message type = 4 thread_id = <139726761690880>} ]
+[Alarm List:  {Request Type = 2 Alarm # = 0 message type = 4}  {Request Type = 1 Alarm # = 4 message type = 4}  {Request Type = 1 Alarm # = 5 message type = 4} ]
+Ready = 0 read_count = 1 writing = 0
+
+Alarm With Message Type (4) and Message Number (4) Displayed at <1522777256>: <Type A> : "test"
+Alarm With Message Type (4) and Message Number (5) Displayed at <1522777261>: <Type A> : "test 2"
+Alarm With Message Type (4) and Message Number (4) Displayed at <1522777261>: <Type A> : "test"
+Alarm With Message Type (4) and Message Number (4) Displayed at <1522777266>: <Type A> : "test"
+Alarm With Message Type (4) and Message Number (4) Displayed at <1522777271>: <Type A> : "test"
+Alarm With Message Type (4) and Message Number (5) Displayed at <1522777271>: <Type A> : "test 2"
+Create_Thread: MessageType(3)
+Type B Alarm Request Error: No Alarm Request With Message Type(3)!
+alarm> Alarm With Message Type (4) and Message Number (4) Displayed at <1522777276>: <Type A> : "test"
+Alarm With Message Type (4) and Message Number (4) Displayed at <1522777281>: <Type A> : "test"
+Alarm With Message Type (4) and Message Number (5) Displayed at <1522777281>: <Type A> : "test 2"
+Alarm With Message Type (4) and Message Number (4) Displayed at <1522777286>: <Type A> : "test"
+Alarm With Message Type (4) and Message Number (4) Displayed at <1522777291>: <Type A> : "test"
+Alarm With Message Type (4) and Message Number (5) Displayed at <1522777291>: <Type A> : "test 2"
+Alarm With Message Type (4) and Message Number (4) Displayed at <1522777296>: <Type A> : "test"
+10 Message(3,5) test 2
+Type A Replacement Alarm Request With Message Number (5) Received at <1522777300>: <A>
+Type A Alarm Request With Message Number <5> Received at time <1522777300>: <Type A>
+alarm> Segmentation fault (core dumped)
+franciso@WORK-STATION:/mnt/c/Users/francis/Desktop$ clearm
+No command 'clearm' found, did you mean:
+ Command 'clear' from package 'ncurses-bin' (main)
+clearm: command not found
+franciso@WORK-STATION:/mnt/c/Users/francis/Desktop$ clear
+franciso@WORK-STATION:/mnt/c/Users/francis/Desktop$ cc New_Alarm_Cond.c -D_POSIX_PTHREAD_SEMANTICS -lpthread
+^[[Afranciso@WORK-STATION:/mnt/c/Users/francis/Deskt./a.out
+alarm> 5 Message(4,4) test
+
+10Type A Alarm Request With Message Number <4> Received at time <1522777400>: <Type A>
+ alarm> Malarm> essage(4,5) test 2
+Type A Alarm Request With Message Number <5> Received at time <1522777400>: <Type A>
+
+alarm> Calarm> reate_Thread: MessageType(4)
+Type B Create Thread Alarm Request With Message Type (4) Inserted Into Alarm List at <1522777400>!
+alarm> Type B Alarm Request Processed at <1522777400>: New Periodic Display Thread With Message Type (4) Created.
+deAlarm With Message Type (4) and Message Number (4) Displayed at <1522777405>: <Type A> : "test"
+bug
+**DEBUG MODE ENGAGED**
+alarm> Alarm With Message Type (4) and Message Number (4) Displayed at <1522777410>: <Type A> : "test"
+Alarm With Message Type (4) and Message Number (5) Displayed at <1522777410>: <Type A> : "test 2"
+Alarm With Message Type (4) and Message Number (4) Displayed at <1522777415>: <Type A> : "test"
+10 Message(3,5) test 2Alarm With Message Type (4) and Message Number (4) Displayed at <1522777420>: <Type A> : "test"
+Alarm With Message Type (4) and Message Number (5) Displayed at <1522777420>: <Type A> : "test 2"
+
+Type A Replacement Alarm Request With Message Number (5) Received at <1522777422>: <A>
+Type A Alarm Request With Message Number <5> Received at time <1522777422>: <Type A>
+alarm>
+[Thread List: Alarm With Message Type (3) Replaced at <1522777422>: <Type A>
+{message type = 4 thread_id = <140542016947968>} ]
+[Alarm List:  {Request Type = 2 Alarm # = 0 message type = 4}  {Request Type = 1 Alarm # = 4 message type = 4}  {Request Type = 1 Alarm # = 5 message type = 3} ]
+Ready = 0 read_count = 1 writing = 0
+
+Alarm With Message Type (4) and Message Number (4) Displayed at <1522777425>: <Type A> : "test"
+Alarm With Message Type (4) and Message Number (4) Displayed at <1522777430>: <Type A> : "test"
+Create_Thread: MessageType(3)
+Type B Create Thread Alarm Request With Message Type (3) Inserted Into Alarm List at <1522777432>!
+alarm> Type B Alarm Request Processed at <1522777432>: New Periodic Display Thread With Message Type (3) Created.
+
+[Thread List: {message type = 3 thread_id = <140541933061888>} {message type = 4 thread_id = <140542016947968>} ]
+[Alarm List:  {Request Type = 2 Alarm # = 0 message type = 4}  {Request Type = 1 Alarm # = 4 message type = 4}  {Request Type = 1 Alarm # = 5 message type = 3}  {Request Type = 2 Alarm # = 5 message type = 3} ]
+Ready = 0 read_count = -9 writing = 0
+
+Alarm With Message Type (4) and Message Number (4) Displayed at <1522777435>: <Type A> : "test"
+Alarm With Message Type (4) and Message Number (4) Displayed at <1522777440>: <Type A> : "test"
+Cancel: Message(4)
+Type C Cancel Alarm Request With Message Number (4) Inserted Into Alarm List at <1522777441>: <Type C>
+alarm> Type C Alarm Request Processed at <1522777441>: Alarm Request With Message Number (4) Removed
+No More Alarm Requests With Message Type (4): Periodic Display Thread For Message Type (4) Terminated.
+
+[Thread List: {message type = 3 thread_id = <140541933061888>} ]
+[Alarm List:  {Request Type = 1 Alarm # = 5 message type = 3}  {Request Type = 2 Alarm # = 5 message type = 3} ]
+Ready = 1 read_count = -1178383 writing = 1
+
+Alarm With Message Type (3) and Message Number (5) Displayed at <1522777442>: <Type A> : "test 2"
+Cancel: Message(5)
+Type C Cancel Alarm Request With Message Number (5) Inserted Into Alarm List at <1522777445>: <Type C>
+alarm> Type C Alarm Request Processed at <1522777445>: Alarm Request With Message Number (5) Removed
+No More Alarm Requests With Message Type (3): Periodic Display Thread For Message Type (3) Terminated.
+
+[Thread List: ]
+[Alarm List: ]
+Ready = 1 read_count = -1178383 writing = 1
+
+^C
+franciso@WORK-STATION:/mnt/c/Users/francis/Desktop$ clear
+franciso@WORK-STATION:/mnt/c/Users/francis/Desktop$ cc New_Alarm_Cond.c -D_POSIX_PTHREAD_SEMANTICS -lpthread
+New_Alarm_Cond.c: In function ‘periodic_display_thread’:
+New_Alarm_Cond.c:571:5: error: incompatible type for argument 1 of ‘sem_wait’
+     sem_wait(sem_mutex);
+     ^
+In file included from New_Alarm_Cond.c:19:0:
+/usr/include/semaphore.h:54:12: note: expected ‘union sem_t *’ but argument is of type ‘sem_t’
+ extern int sem_wait (sem_t *__sem);
+            ^
+New_Alarm_Cond.c:573:5: error: incompatible type for argument 1 of ‘sem_post’
+     sem_post(sem_mutex);
+     ^
+In file included from New_Alarm_Cond.c:19:0:
+/usr/include/semaphore.h:69:12: note: expected ‘union sem_t *’ but argument is of type ‘sem_t’
+ extern int sem_post (sem_t *__sem) __THROWNL;
+            ^
+New_Alarm_Cond.c:607:5: error: incompatible type for argument 1 of ‘sem_wait’
+     sem_wait(sem_mutex);
+     ^
+In file included from New_Alarm_Cond.c:19:0:
+/usr/include/semaphore.h:54:12: note: expected ‘union sem_t *’ but argument is of type ‘sem_t’
+ extern int sem_wait (sem_t *__sem);
+            ^
+New_Alarm_Cond.c:609:5: error: incompatible type for argument 1 of ‘sem_post’
+     sem_post(sem_mutex);
+     ^
+In file included from New_Alarm_Cond.c:19:0:
+/usr/include/semaphore.h:69:12: note: expected ‘union sem_t *’ but argument is of type ‘sem_t’
+ extern int sem_post (sem_t *__sem) __THROWNL;
+            ^
+franciso@WORK-STATION:/mnt/c/Users/francis/Desktop$ cc New_Alarm_Cond.c -D_POSIX_PTHREAD_SEMANTICS -lpthread
+franciso@WORK-STATION:/mnt/c/Users/francis/Desktop$ clear
+franciso@WORK-STATION:/mnt/c/Users/francis/Desktop$ ./a.out
+alarm> 5 Message(4,4) test
+Type A Alarm Request With Message Number <4> Received at time <1522777923>: <Type A>
+alarm> 10 Message(4,5) test 2
+Type A Alarm Request With Message Number <5> Received at time <1522777926>: <Type A>
+alarm> Create_Thread: MessageType(4)
+Type B Create Thread Alarm Request With Message Type (4) Inserted Into Alarm List at <1522777927>!
+alarm> Type B Alarm Request Processed at <1522777927>: New Periodic Display Thread With Message Type (4) Created.
+debug
+**DEBUG MODE ENGAGED**
+alarm> Alarm With Message Type (4) and Message Number (4) Displayed at <1522777932>: <Type A> : "test"
+Alarm With Message Type (4) and Message Number (5) Displayed at <1522777937>: <Type A> : "test 2"
+Alarm With Message Type (4) and Message Number (4) Displayed at <1522777937>: <Type A> : "test"
+Alarm With Message Type (4) and Message Number (4) Displayed at <1522777942>: <Type A> : "test"
+10 Message(3,5) test 2
+Type A Replacement Alarm Request With Message Number (5) Received at <1522777943>: <A>
+Type A Alarm Request With Message Number <5> Received at time <1522777943>: <Type A>
+alarm>
+[Thread List: Alarm With Message Type (3) Replaced at <1522777943>: <Type A>
+{message type = 4 thread_id = <139767765206784>} ]
+[Alarm List:  {Request Type = 2 Alarm # = 0 message type = 4}  {Request Type = 1 Alarm # = 4 message type = 4}  {Request Type = 1 Alarm # = 5 message type = 3} ]
+Ready = 0 read_count = 1 writing = 0
+
+Alarm With Message Type (4) and Message Number (4) Displayed at <1522777947>: <Type A> : "test"
+Alarm With Message Type (4) and Message Number (4) Displayed at <1522777952>: <Type A> : "test"
+Alarm With Message Type (4) and Message Number (4) Displayed at <1522777957>: <Type A> : "test"
+Create_Thread: MessageType(3)
+Type B Create Thread Alarm Request With Message Type (3) Inserted Into Alarm List at <1522777958>!
+alarm> Type B Alarm Request Processed at <1522777958>: New Periodic Display Thread With Message Type (3) Created.
+
+[Thread List: {message type = 3 thread_id = <139767756752640>} {message type = 4 thread_id = <139767765206784>} ]
+[Alarm List:  {Request Type = 2 Alarm # = 0 message type = 4}  {Request Type = 1 Alarm # = 4 message type = 4}  {Request Type = 1 Alarm # = 5 message type = 3}  {Request Type = 2 Alarm # = 5 message type = 3} ]
+Ready = 0 read_count = 2 writing = 0
+
+Alarm With Message Type (4) and Message Number (4) Displayed at <1522777962>: <Type A> : "test"
+Cancel: Message(4)
+Type C Cancel Alarm Request With Message Number (4) Inserted Into Alarm List at <1522777966>: <Type C>
+alarm> Type C Alarm Request Processed at <1522777966>: Alarm Request With Message Number (4) Removed
+No More Alarm Requests With Message Type (4): Periodic Display Thread For Message Type (4) Terminated.
+
+[Thread List: {message type = 3 thread_id = <139767756752640>} ]
+[Alarm List:  {Request Type = 1 Alarm # = 5 message type = 3}  {Request Type = 2 Alarm # = 5 message type = 3} ]
+Ready = 1 read_count = 0 writing = 1
+
+Alarm With Message Type (3) and Message Number (5) Displayed at <1522777968>: <Type A> : "test 2"
+Alarm With Message Type (3) and Message Number (5) Displayed at <1522777978>: <Type A> : "test 2"
+Cancel: Message(5)
+Type C Cancel Alarm Request With Message Number (5) Inserted Into Alarm List at <1522777982>: <Type C>
+alarm> Type C Alarm Request Processed at <1522777982>: Alarm Request With Message Number (5) Removed
+No More Alarm Requests With Message Type (3): Periodic Display Thread For Message Type (3) Terminated.
+
+[Thread List: ]
+[Alarm List: ]
+Ready = 1 read_count = 0 writing = 1
+
+franciso@WORK-STATION:/mnt/c/Users/francis/Desktop$ clear
+franciso@WORK-STATION:/mnt/c/Users/francis/Desktop$ cc New_Alarm_Cond.c -D_POSIX_PTHREAD_SEMANTICS -lpthread
+New_Alarm_Cond.c: In function ‘main’:
+New_Alarm_Cond.c:1009:5: error: ‘else’ without a previous ‘if’
+     else{
+     ^
+New_Alarm_Cond.c: At top level:
+New_Alarm_Cond.c:1014:1: error: expected identifier or ‘(’ before ‘}’ token
+ }
+ ^
+franciso@WORK-STATION:/mnt/c/Users/francis/Desktop$ cc New_Alarm_Cond.c -D_POSIX_PTHREAD_SEMANTICS -lpthread
+franciso@WORK-STATION:/mnt/c/Users/francis/Desktop$ ./a.out
+alarm> d
+**DEBUG MODE ENGAGED**
+Ready = 0 read_count = 0 writing = 0
+
+**DEBUG MODE DISENGAGED**
+alarm> franciso@WORK-STATION:/mnt/c/Users/francis/Desktop$ cc New_Alarm_Cond.c -D_POSIX_PTHREAD_SEMANTICS -lpthread
+/tmp/cclgzMKv.o: In function `main':
+New_Alarm_Cond.c:(.text+0x191b): undefined reference to `display'
+collect2: error: ld returned 1 exit status
+franciso@WORK-STATION:/mnt/c/Users/francis/Desktop$ cc New_Alarm_Cond.c -D_POSIX_PTHREAD_SEMANTICS -lpthread
+franciso@WORK-STATION:/mnt/c/Users/francis/Desktop$ ./a.out
+alarm> d
+**DEBUG MODE ENGAGED**
+
+[Thread List: ]
+[Alarm List: ]
+Ready = 0 read_count = 0 writing = 0
+
+**DEBUG MODE DISENGAGED**
+alarm> 5 Message(4,4) test
+
+Type A Alarm Request With Message Number <4> Received at time <1522778355>: <Type A>
+1alarm> 0alarm>  Message(4,5) test 2
+Type A Alarm Request With Message Number <5> Received at time <1522778355>: <Type A>
+alarm>
+Cralarm> eate_Thread: MessageType(4)
+Type B Create Thread Alarm Request With Message Type (4) Inserted Into Alarm List at <1522778355>!
+alarm> Type B Alarm Request Processed at <1522778355>: New Periodic Display Thread With Message Type (4) Created.
+
+alarm> dAlarm With Message Type (4) and Message Number (4) Displayed at <1522778360>: <Type A> : "test"
+d
+Bad command
+alarm> d
+**DEBUG MODE ENGAGED**
+
+[Thread List: {message type = 4 thread_id = <139646732273408>} ]
+[Alarm List:  {Request Type = 2 Alarm # = 0 message type = 4}  {Request Type = 1 Alarm # = 4 message type = 4}  {Request Type = 1 Alarm # = 5 message type = 4} ]
+Ready = 0 read_count = 1 writing = 0
+
+**DEBUG MODE DISENGAGED**
+alarm> Alarm With Message Type (4) and Message Number (4) Displayed at <1522778365>: <Type A> : "test"
+Alarm With Message Type (4) and Message Number (5) Displayed at <1522778365>: <Type A> : "test 2"
+Alarm With Message Type (4) and Message Number (4) Displayed at <1522778370>: <Type A> : "test"
+debug
+**DEBUG MODE ENGAGED**
+alarm> Alarm With Message Type (4) and Message Number (5) Displayed at <1522778375>: <Type A> : "test 2"
+Alarm With Message Type (4) and Message Number (4) Displayed at <1522778375>: <Type A> : "test"
+Alarm With Message Type (4) and Message Number (4) Displayed at <1522778380>: <Type A> : "test"
+10 Message(3,5) test 2
+Type A Replacement Alarm Request With Message Number (5) Received at <1522778380>: <A>
+Type A Alarm Request With Message Number <5> Received at time <1522778380>: <Type A>
+alarm>
+[Thread List: Alarm With Message Type (3) Replaced at <1522778380>: <Type A>
+{message type = 4 thread_id = <139646732273408>} ]
+[Alarm List:  {Request Type = 2 Alarm # = 0 message type = 4}  {Request Type = 1 Alarm # = 4 message type = 4}  {Request Type = 1 Alarm # = 5 message type = 3} ]
+Ready = 0 read_count = 1 writing = 0
+
+Alarm With Message Type (4) and Message Number (4) Displayed at <1522778385>: <Type A> : "test"
+Create_Thread: MessageType(3)
+Type B Create Thread Alarm Request With Message Type (3) Inserted Into Alarm List at <1522778388>!
+alarm> Type B Alarm Request Processed at <1522778388>: New Periodic Display Thread With Message Type (3) Created.
+
+[Thread List: {message type = 3 thread_id = <139646723819264>} {message type = 4 thread_id = <139646732273408>} ]
+[Alarm List:  {Request Type = 2 Alarm # = 0 message type = 4}  {Request Type = 1 Alarm # = 4 message type = 4}  {Request Type = 1 Alarm # = 5 message type = 3}  {Request Type = 2 Alarm # = 5 message type = 3} ]
+Ready = 0 read_count = 1 writing = 0
+
+Alarm With Message Type (4) and Message Number (4) Displayed at <1522778390>: <Type A> : "test"
+Alarm With Message Type (4) and Message Number (4) Displayed at <1522778395>: <Type A> : "test"
+Alarm With Message Type (3) and Message Number (5) Displayed at <1522778398>: <Type A> : "test 2"
+Alarm With Message Type (4) and Message Number (4) Displayed at <1522778400>: <Type A> : "test"
+d
+**DEBUG MODE ENGAGED**
+
+[Thread List: {message type = 3 thread_id = <139646723819264>} {message type = 4 thread_id = <139646732273408>} ]
+[Alarm List:  {Request Type = 2 Alarm # = 0 message type = 4}  {Request Type = 1 Alarm # = 4 message type = 4}  {Request Type = 1 Alarm # = 5 message type = 3}  {Request Type = 2 Alarm # = 5 message type = 3} ]
+Ready = 0 read_count = 0 writing = 0
+
+**DEBUG MODE DISENGAGED**
+alarm> d
+**DEBUG MODE ENGAGED**
+
+[Thread List: {message type = 3 thread_id = <139646723819264>} {message type = 4 thread_id = <139646732273408>} ]
+[Alarm List:  {Request Type = 2 Alarm # = 0 message type = 4}  {Request Type = 1 Alarm # = 4 message type = 4}  {Request Type = 1 Alarm # = 5 message type = 3}  {Request Type = 2 Alarm # = 5 message type = 3} ]
+Ready = 0 read_count = 1 writing = 0
+
+**DEBUG MODE DISENGAGED**
+alarm> d
+**DEBUG MODE ENGAGED**
+
+[Thread List: {message type = 3 thread_id = <139646723819264>} {message type = 4 thread_id = <139646732273408>} ]
+[Alarm List:  {Request Type = 2 Alarm # = 0 message type = 4}  {Request Type = 1 Alarm # = 4 message type = 4}  {Request Type = 1 Alarm # = 5 message type = 3}  {Request Type = 2 Alarm # = 5 message type = 3} ]
+Ready = 0 read_count = 1 writing = 0
+
+**DEBUG MODE DISENGAGED**
+alarm> d
+**DEBUG MODE ENGAGED**
+
+[Thread List: {message type = 3 thread_id = <139646723819264>} {message type = 4 thread_id = <139646732273408>} ]
+[Alarm List:  {Request Type = 2 Alarm # = 0 message type = 4}  {Request Type = 1 Alarm # = 4 message type = 4}  {Request Type = 1 Alarm # = 5 message type = 3}  {Request Type = 2 Alarm # = 5 message type = 3} ]
+Ready = 0 read_count = 1 writing = 0
+
+**DEBUG MODE DISENGAGED**
+alarm> d
+**DEBUG MODE ENGAGED**
+
+[Thread List: {message type = 3 thread_id = <139646723819264>} {message type = 4 thread_id = <139646732273408>} ]
+[Alarm List:  {Request Type = 2 Alarm # = 0 message type = 4}  {Request Type = 1 Alarm # = 4 message type = 4}  {Request Type = 1 Alarm # = 5 message type = 3}  {Request Type = 2 Alarm # = 5 message type = 3} ]
+Ready = 0 read_count = 1 writing = 0
+
+**DEBUG MODE DISENGAGED**
+alarm> d
+**DEBUG MODE ENGAGED**
+
+[Thread List: {message type = 3 thread_id = <139646723819264>} {message type = 4 thread_id = <139646732273408>} ]
+[Alarm List:  {Request Type = 2 Alarm # = 0 message type = 4}  {Request Type = 1 Alarm # = 4 message type = 4}  {Request Type = 1 Alarm # = 5 message type = 3}  {Request Type = 2 Alarm # = 5 message type = 3} ]
+Ready = 0 read_count = 0 writing = 0
+
+**DEBUG MODE DISENGAGED**
+alarm> Alarm With Message Type (4) and Message Number (4) Displayed at <1522778405>: <Type A> : "test"
+d
+**DEBUG MODE ENGAGED**
+
+[Thread List: {message type = 3 thread_id = <139646723819264>} {message type = 4 thread_id = <139646732273408>} ]
+[Alarm List:  {Request Type = 2 Alarm # = 0 message type = 4}  {Request Type = 1 Alarm # = 4 message type = 4}  {Request Type = 1 Alarm # = 5 message type = 3}  {Request Type = 2 Alarm # = 5 message type = 3} ]
+Ready = 0 read_count = 0 writing = 0
+
+**DEBUG MODE DISENGAGED**
+alarm> d
+**DEBUG MODE ENGAGED**
+
+[Thread List: {message type = 3 thread_id = <139646723819264>} {message type = 4 thread_id = <139646732273408>} ]
+[Alarm List:  {Request Type = 2 Alarm # = 0 message type = 4}  {Request Type = 1 Alarm # = 4 message type = 4}  {Request Type = 1 Alarm # = 5 message type = 3}  {Request Type = 2 Alarm # = 5 message type = 3} ]
+Ready = 0 read_count = 2 writing = 0
+
+**DEBUG MODE DISENGAGED**
+alarm> d
+**DEBUG MODE ENGAGED**
+
+[Thread List: {message type = 3 thread_id = <139646723819264>} {message type = 4 thread_id = <139646732273408>} ]
+[Alarm List:  {Request Type = 2 Alarm # = 0 message type = 4}  {Request Type = 1 Alarm # = 4 message type = 4}  {Request Type = 1 Alarm # = 5 message type = 3}  {Request Type = 2 Alarm # = 5 message type = 3} ]
+Ready = 0 read_count = 1 writing = 0
+
+**DEBUG MODE DISENGAGED**
+alarm> Alarm With Message Type (3) and Message Number (5) Displayed at <1522778408>: <Type A> : "test 2"
+Alarm With Message Type (4) and Message Number (4) Displayed at <1522778410>: <Type A> : "test"
+Alarm With Message Type (4) and Message Number (4) Displayed at <1522778415>: <Type A> : "test"
+Alarm With Message Type (3) and Message Number (5) Displayed at <1522778418>: <Type A> : "test 2"
+Cancel: Message(4)
+Type C Cancel Alarm Request With Message Number (4) Inserted Into Alarm List at <1522778419>: <Type C>
+alarm> Type C Alarm Request Processed at <1522778419>: Alarm Request With Message Number (4) Removed
+No More Alarm Requests With Message Type (4): Periodic Display Thread For Message Type (4) Terminated.
+
+[Thread List: {message type = 3 thread_id = <139646723819264>} ]
+[Alarm List:  {Request Type = 1 Alarm # = 5 message type = 3}  {Request Type = 2 Alarm # = 5 message type = 3} ]
+Ready = 1 read_count = 0 writing = 1
+
+Alarm With Message Type (3) and Message Number (5) Displayed at <1522778428>: <Type A> : "test 2"
+Cancel: Message(5)
+Type C Cancel Alarm Request With Message Number (5) Inserted Into Alarm List at <1522778429>: <Type C>
+alarm> Type C Alarm Request Processed at <1522778429>: Alarm Request With Message Number (5) Removed
+No More Alarm Requests With Message Type (3): Periodic Display Thread For Message Type (3) Terminated.
+
+[Thread List: ]
+[Alarm List: ]
+Ready = 1 read_count = 0 writing = 1
+
+
+alarm> d
+**DEBUG MODE ENGAGED**
+
+[Thread List: ]
+[Alarm List: ]
+Ready = 0 read_count = 0 writing = 0
+
+**DEBUG MODE DISENGAGED**
+alarm>
