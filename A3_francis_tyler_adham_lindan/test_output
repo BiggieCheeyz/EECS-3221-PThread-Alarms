@@ -1,4 +1,10 @@
-** The following tests were done by Francis Okoyo franciso 213811336 **
+** The following tests were done by Francis Okoyo franciso 213811336 on our initial build
+** These tests (Test 1 and 2) have one of the problems stated in the report where the display thread would
+** sum up the time of the alarms. (the last alarm takes the summ of all its alarm type buddies to print)
+
+** Test 4 is the last test we did. from this point all problems were fixed
+
+
 Test1 :
 
 alarm> Diagram
@@ -130,6 +136,7 @@ Ready = 0 read_count = 0 writing = 0
 **////////////////////////////////////////////////////////////////////////////**
 
 
+Test 3:
 /* testing for a fault (this series of inputs previously caused a segmentation fault) */
 franciso@WORK-STATION:/mnt/c/Users/francis/Desktop/EECS 3221/assign3/EECS3221Assignment3/A3_francis_tyler_adham_lindan$ ./a.out
 alarm>
@@ -194,7 +201,7 @@ alarm> clear
 Bad command
 
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////
+Test 4:
 
 franciso@WORK-STATION:/mnt/c/Users/francis/Desktop$ clear
 franciso@WORK-STATION:/mnt/c/Users/francis/Desktop$ make
